@@ -27,11 +27,19 @@ fun checkNicknameExists(collection: MongoCollection<Document>, nickname: String)
 
 // Password
 fun validatePassword(password: String): Boolean {
-    val passwordRegex = Regex("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}\$")
+    // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
+    val passwordRegex = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@\$!%*?&])[A-Za-z\\d@\$!%*?&]{8,}\$")
     return passwordRegex.matches(password)
 }
 fun hashPassword(password: String): String {
     return BCrypt.hashpw(password, BCrypt.gensalt())
+}
+
+fun validateUserCredentials(collection: MongoCollection<Document>, account: AccountLogin): Boolean {
+    val document = collection.find(Document(
+        if ("@" in account.login) "email" else "name", account.login
+    )).first()
+    return document != null && BCrypt.checkpw(account.password, document["password"] as String)
 }
 
 /*fun validateAccountLogin(account: AccountLogin): Boolean {
@@ -42,8 +50,13 @@ fun generateToken(): String {
     return UUID.randomUUID().toString()
 }
 
-fun createAccountDocument(collection: MongoCollection<Document>, account: AccountRegister): Document {
+fun generateAccountID(): String {
+    return (0..31).map { ('0'..'9').random() }.joinToString("")
+}
+
+fun createAccountDocument(account: AccountRegister): Document {
     val document = Document()
+    document["account_id"] = generateAccountID()
     document["token"] = generateToken()
     document["name"] = account.nickname
     document["password"] = hashPassword(account.password)

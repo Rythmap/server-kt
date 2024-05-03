@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Rythmap API
-  description: Written on Ktor by Danila Mityashin. Has been influenced by Alexandr Pervushin.
+  description: Written on Ktor by Danila Mityashin. Was influenced by Alexander Pervushin.
   version: 1.0.0
 tags:
   - name: Account
@@ -26,12 +26,26 @@ paths:
                     application/json:
                       schema:
                           $ref: '#/components/schemas/AccountRegisterResponseSuccess'
-              '404':
-                description: Fail
+
+    /account/login:
+        post:
+          tags:
+              - Account
+          summary: Login to account
+          operationId: loginAccount
+          requestBody:
+              required: true
+              content:
+                application/json:
+                    schema:
+                      $ref: '#/components/schemas/AccountLoginRequest'
+          responses:
+              '200':
+                description: Success
                 content:
                     application/json:
                       schema:
-                          $ref: '#/components/schemas/AccountRegisterResponseFail'
+                          $ref: '#/components/schemas/AccountLoginResponseSuccess'
 
     /account/info:
       get:
@@ -53,16 +67,10 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/AccountInfoResponseSuccess'
-          '404':
-            description: Fail
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/AccountInfoResponseFail'
 
 components:
     schemas:
-        AccountRegisterRequest:
+      AccountRegisterRequest:
           type: object
           properties:
               nickname:
@@ -73,7 +81,7 @@ components:
               email:
                 type: string
                 format: email
-        AccountRegisterResponseSuccess:
+      AccountRegisterResponseSuccess:
           type: object
           properties:
               token:
@@ -82,26 +90,36 @@ components:
                 type: string
                 enum:
                   - bearer
-        AccountRegisterResponseFail:
-            type: object
-            properties:
-                detail:
-                    type: string
 
-        AccountInfoResponseSuccess:
+      AccountLoginRequest:
+          type: object
+          properties:
+              login:
+                type: string
+              password:
+                type: string
+                format: password
+      AccountLoginResponseSuccess:
             type: object
             properties:
-              token:
-                type: string
-              nickname:
-                type: string
-              email:
-                  type: string
-              created_at:
-                  type: string
-                  format: date-time
-        AccountInfoResponseFail:
-            type: object
-            properties:
-                detail:
+                token:
                     type: string
+                token_type:
+                    type: string
+                    enum:
+                    - bearer
+
+      AccountInfoResponseSuccess:
+          type: object
+          properties:
+            account_id:
+              type: string
+            token:
+              type: string
+            nickname:
+              type: string
+            email:
+              type: string
+            created_at:
+              type: string
+              format: date-time

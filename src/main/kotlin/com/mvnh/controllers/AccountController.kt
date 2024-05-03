@@ -1,9 +1,10 @@
-package com.mvnh.plugins.controllers
+package com.mvnh.controllers
 
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.client.MongoClients
 import com.mvnh.entities.*
+import com.mvnh.entities.account.AccountLogin
 import com.mvnh.entities.account.AccountRegister
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -12,13 +13,15 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.bson.Document
 
 @Serializable
-data class AccountRegisterResponse(val token: String, val token_type: String = "bearer")
+data class AccountAuthResponse(val token: String, @SerialName("token_type") val tokenType: String = "bearer")
 
 @Serializable
-data class AccountInfoResponse(val token: String,
-                               val name: String,
+data class AccountInfoResponse(@SerialName("account_id") val accountID: String?,
+                               val token: String,
+                               val nickname: String,
                                val email: String,
                                @SerialName("created_at") val createdAt: String)
 
@@ -46,46 +49,66 @@ fun Route.accountController() {
                 return@post
             } else {
                 if (!validateEmail(account.email)) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid email: must be a valid email address")
+                    call.respond(HttpStatusCode.BadRequest, "Invalid email")
                     return@post
                 } else if (!validatePassword(account.password)) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid password: must contain at least 8 characters and 1 number")
+                    call.respond(HttpStatusCode.BadRequest, "Invalid password")
                     return@post
                 } else if (!validateNickname(account.nickname)) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid nickname: must contain at least 3 characters and no special characters")
+                    call.respond(HttpStatusCode.BadRequest, "Invalid nickname")
                     return@post
                 } else {
-                    val document = createAccountDocument(collection, account)
+                    val document = createAccountDocument(account)
 
                     collection.insertOne(document)
-                    call.respond(HttpStatusCode.OK, AccountRegisterResponse(document["token"].toString()))
+                    call.respond(HttpStatusCode.OK, AccountAuthResponse(document["token"].toString()))
                 }
             }
         }
     }
 
     post("/account/login") {
+        val credentials = call.receive<AccountLogin>()
 
+        if (credentials.login.isEmpty() || credentials.password.isEmpty()) {
+            call.respond(HttpStatusCode.BadRequest, "Empty fields")
+            return@post
+        } else {
+            val collection = mongoDB.getCollection("accounts")
+
+            if (!validateUserCredentials(collection, credentials)) {
+                call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+                return@post
+            } else {
+                val document = collection.find(Document(
+                    if ("@" in credentials.login) "email" else "name", credentials.login
+                )).first()
+
+                call.respond(HttpStatusCode.OK, AccountAuthResponse(document?.get("token").toString()))
+            }
+        }
     }
 
     get("/account/info") {
         val token = call.parameters["token"]
         if (token == null) {
             call.respond(HttpStatusCode.BadRequest, "Token not provided")
+            return@get
         } else {
             val collection = mongoDB.getCollection("accounts")
-            val document = collection.find(org.bson.Document("token", token)).first()
+            val document = collection.find(Document("token", token)).first()
             if (document == null) {
                 call.respond(HttpStatusCode.NotFound, "Token not found")
                 return@get
             } else {
                 call.respond(
                     AccountInfoResponse(
+                        accountID = document["account_id"] as? String,
                         token = document["token"] as String,
-                        name = document["name"] as String,
+                        nickname = document["name"] as String,
                         email = document["email"] as String,
                         createdAt = document["created_at"].toString()
-                    ),
+                    )
                 )
             }
         }
