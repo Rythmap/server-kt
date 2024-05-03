@@ -1,0 +1,107 @@
+openapi: 3.0.3
+info:
+  title: Rythmap API
+  description: Written on Ktor by Danila Mityashin. Has been influenced by Alexandr Pervushin.
+  version: 1.0.0
+tags:
+  - name: Account
+    description: Account operations
+paths:
+    /account/register:
+        post:
+          tags:
+              - Account
+          summary: Register new account
+          operationId: registerAccount
+          requestBody:
+              required: true
+              content:
+                application/json:
+                    schema:
+                      $ref: '#/components/schemas/AccountRegisterRequest'
+          responses:
+              '200':
+                description: Success
+                content:
+                    application/json:
+                      schema:
+                          $ref: '#/components/schemas/AccountRegisterResponseSuccess'
+              '404':
+                description: Fail
+                content:
+                    application/json:
+                      schema:
+                          $ref: '#/components/schemas/AccountRegisterResponseFail'
+
+    /account/info:
+      get:
+        tags:
+          - Account
+        summary: Get account information
+        operationId: getAccountInfo
+        parameters:
+          - name: token
+            in: query
+            description: Account token
+            required: true
+            schema:
+              type: string
+        responses:
+          '200':
+            description: Success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AccountInfoResponseSuccess'
+          '404':
+            description: Fail
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AccountInfoResponseFail'
+
+components:
+    schemas:
+        AccountRegisterRequest:
+          type: object
+          properties:
+              nickname:
+                type: string
+              password:
+                type: string
+                format: password
+              email:
+                type: string
+                format: email
+        AccountRegisterResponseSuccess:
+          type: object
+          properties:
+              token:
+                type: string
+              token_type:
+                type: string
+                enum:
+                  - bearer
+        AccountRegisterResponseFail:
+            type: object
+            properties:
+                detail:
+                    type: string
+
+        AccountInfoResponseSuccess:
+            type: object
+            properties:
+              token:
+                type: string
+              nickname:
+                type: string
+              email:
+                  type: string
+              created_at:
+                  type: string
+                  format: date-time
+        AccountInfoResponseFail:
+            type: object
+            properties:
+                detail:
+                    type: string
