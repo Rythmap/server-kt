@@ -206,7 +206,12 @@ paths:
                       token:
                         type: string
                       visible_name:
-                        type: string
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          surname:
+                            type: string
                       music_preferences:
                         type: array
                         items:
@@ -241,7 +246,12 @@ components:
               nickname:
                 type: string
               visible_name:
-                type: string
+                type: object
+                properties:
+                  name:
+                    type: string
+                  surname:
+                    type: string
               password:
                 type: string
                 format: password

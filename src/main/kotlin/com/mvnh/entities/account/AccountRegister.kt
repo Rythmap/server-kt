@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AccountRegister(val nickname: String,
-                           @SerialName("visible_name") val visibleName: String? = null,
+                           @SerialName("visible_name") val visibleName: AccountVisibleName? = AccountVisibleName(),
                            val password: String,
                            val email: String,
                            @SerialName("music_preferences") val musicPreferences: List<String>? = null,

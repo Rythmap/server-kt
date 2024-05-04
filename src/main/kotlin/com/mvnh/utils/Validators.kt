@@ -3,6 +3,7 @@ package com.mvnh.utils
 import com.mongodb.client.MongoCollection
 import com.mvnh.entities.account.AccountLogin
 import com.mvnh.entities.account.AccountRegister
+import com.mvnh.entities.account.AccountVisibleName
 import org.bson.Document
 import org.mindrot.jbcrypt.BCrypt
 import java.util.*
@@ -39,7 +40,7 @@ fun validateUserCredentials(collection: MongoCollection<Document>, account: Acco
     val document = collection.find(Document(
         if ("@" in account.login) "email" else "nickname", account.login
     )).first()
-    return document != null && BCrypt.checkpw(account.password, document["password"] as String)
+    return document != null && BCrypt.checkpw(account.password, document["password"] as String) // If credentials are valid, return true
 }
 
 fun generateToken(): String {
@@ -55,7 +56,10 @@ fun createAccountDocument(account: AccountRegister): Document {
     document["account_id"] = generateAccountID()
     document["token"] = generateToken()
     document["nickname"] = account.nickname
-    document["visible_name"] = account.visibleName
+    document["visible_name"] = Document().apply {
+        put("name", account.visibleName?.name)
+        put("surname", account.visibleName?.surname)
+    }
     document["password"] = hashPassword(account.password)
     document["email"] = account.email
     document["music_preferences"] = account.musicPreferences

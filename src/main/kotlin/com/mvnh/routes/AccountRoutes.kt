@@ -1,6 +1,5 @@
 package com.mvnh.routes
 
-import com.mongodb.client.model.Updates
 import com.mvnh.entities.account.*
 import com.mvnh.utils.*
 import io.ktor.http.*
@@ -19,12 +18,12 @@ data class AccountAuthResponse(val token: String, @SerialName("token_type") val 
 data class AccountInfoResponse(@SerialName("account_id") val accountID: String,
                                val token: String,
                                val nickname: String,
-                               @SerialName("visible_name") val visibleName: String = nickname,
+                               @SerialName("visible_name") val visibleName: AccountVisibleName?,
                                val email: String,
-                               @SerialName("created_at") val createdAt: String,
                                @SerialName("music_preferences") val musicPreferences: List<String>? = null,
                                @SerialName("other_preferences") val otherPreferences: List<String>? = null,
-                               val about: String? = null)
+                               val about: String? = null,
+                               @SerialName("created_at") val createdAt: String)
 
 fun Route.accountRoutes() {
     val mongoDB = getMongoDatabase()
@@ -95,12 +94,19 @@ fun Route.accountRoutes() {
                     call.respond(HttpStatusCode.NotFound, "Token not found")
                     return@get
                 } else {
+                    val visibleNameDocument = document["visible_name"] as Document?
                     call.respond(
                         AccountInfoResponse(
                             accountID = document["account_id"] as String,
                             token = document["token"] as String,
                             nickname = document["nickname"] as String,
-                            visibleName = document["visible_name"] as String,
+                            visibleName = AccountVisibleName(
+                                name = visibleNameDocument?.get("name") as String?,
+                                surname = visibleNameDocument?.get("surname") as String?
+                            ),
+                            musicPreferences = document["music_preferences"] as List<String>?,
+                            otherPreferences = document["other_preferences"] as List<String>?,
+                            about = document["about"] as String?,
                             email = document["email"] as String,
                             createdAt = document["created_at"].toString()
                         )
@@ -144,7 +150,8 @@ fun Route.accountRoutes() {
                     call.respond(HttpStatusCode.NotFound, "Token not found")
                     return@post
                 } else {
-                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("visible_name", account.visibleName)))
+                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("visible_name.name", account.visibleName?.name)))
+                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("visible_name.surname", account.visibleName?.surname)))
                     accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("music_preferences", account.musicPreferences)))
                     accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("other_preferences", account.otherPreferences)))
                     accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("about", account.about)))
@@ -155,7 +162,7 @@ fun Route.accountRoutes() {
             post("/nickname") {
                 val account = call.receive<AccountUpdateNickname>()
 
-                val document = accountsCollection.find(Document("nickname", account.currentNickname)).first()
+                val document = accountsCollection.find(Document("token", account.token)).first()
 
                 if (document == null) {
                     call.respond(HttpStatusCode.NotFound, "Token not found")
@@ -164,11 +171,11 @@ fun Route.accountRoutes() {
                     if (!validateNickname(account.newNickname)) {
                         call.respond(HttpStatusCode.BadRequest, "Invalid nickname")
                         return@post
-                    } else if (!checkNicknameExists(accountsCollection, account.newNickname)) {
+                    } else if (checkNicknameExists(accountsCollection, account.newNickname)) {
                         call.respond(HttpStatusCode.Conflict, "Nickname already exists")
                         return@post
                     } else {
-                        accountsCollection.updateOne(Document("nickname", account.currentNickname), Document("\$set", Document("nickname", account.newNickname)))
+                        accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("nickname", account.newNickname)))
                         call.respond(HttpStatusCode.OK, "Nickname changed")
                     }
                 }
