@@ -1,6 +1,7 @@
 package com.mvnh.routes
 
 import com.mvnh.entities.account.AccountChangeNickname
+import com.mvnh.entities.account.AccountChangePassword
 import com.mvnh.entities.account.AccountLogin
 import com.mvnh.entities.account.AccountRegister
 import com.mvnh.utils.*
@@ -25,6 +26,7 @@ data class AccountInfoResponse(@SerialName("account_id") val accountID: String?,
 
 fun Route.accountController() {
     val mongoDB = getMongoDatabase()
+    val accountsCollection = mongoDB.getCollection("accounts")
 
     route("/account") {
         post("/register") {
@@ -34,12 +36,10 @@ fun Route.accountController() {
                 call.respond(HttpStatusCode.BadRequest, "Empty fields")
                 return@post
             } else {
-                val collection = mongoDB.getCollection("accounts")
-
-                if (checkEmailExists(collection, account.email)) {
+                if (checkEmailExists(accountsCollection, account.email)) {
                     call.respond(HttpStatusCode.Conflict, "Email already exists")
                     return@post
-                } else if (checkNicknameExists(collection, account.nickname)) {
+                } else if (checkNicknameExists(accountsCollection, account.nickname)) {
                     call.respond(HttpStatusCode.Conflict, "Nickname already exists")
                     return@post
                 } else {
@@ -55,7 +55,7 @@ fun Route.accountController() {
                     } else {
                         val document = createAccountDocument(account)
 
-                        collection.insertOne(document)
+                        accountsCollection.insertOne(document)
                         call.respond(HttpStatusCode.OK, AccountAuthResponse(document["token"].toString()))
                     }
                 }
@@ -69,13 +69,11 @@ fun Route.accountController() {
                 call.respond(HttpStatusCode.BadRequest, "Empty fields")
                 return@post
             } else {
-                val collection = mongoDB.getCollection("accounts")
-
-                if (!validateUserCredentials(collection, credentials)) {
+                if (!validateUserCredentials(accountsCollection, credentials)) {
                     call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
                     return@post
                 } else {
-                    val document = collection.find(Document(
+                    val document = accountsCollection.find(Document(
                         if ("@" in credentials.login) "email" else "name", credentials.login
                     )).first()
 
@@ -90,8 +88,7 @@ fun Route.accountController() {
                 call.respond(HttpStatusCode.BadRequest, "Token not provided")
                 return@get
             } else {
-                val collection = mongoDB.getCollection("accounts")
-                val document = collection.find(Document("token", token)).first()
+                val document = accountsCollection.find(Document("token", token)).first()
                 if (document == null) {
                     call.respond(HttpStatusCode.NotFound, "Token not found")
                     return@get
@@ -117,18 +114,16 @@ fun Route.accountController() {
                 call.respond(HttpStatusCode.BadRequest, "Empty fields")
                 return@delete
             } else {
-                val collection = mongoDB.getCollection("accounts")
-
-                if (!validateUserCredentials(collection, AccountLogin(login, password))) {
+                if (!validateUserCredentials(accountsCollection, AccountLogin(login, password))) {
                     call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
                     return@delete
                 } else {
-                    val document = collection.find(Document(
+                    val document = accountsCollection.find(Document(
                         if ("@" in login) "email" else "name", login
                     )).first()
 
                     if (document != null) {
-                        collection.deleteOne(document)
+                        accountsCollection.deleteOne(document)
                         call.respond(HttpStatusCode.OK, "Account deleted")
                     } else {
                         call.respond(HttpStatusCode.NotFound, "Account not found")
@@ -141,8 +136,7 @@ fun Route.accountController() {
             post("/nickname") {
                 val account = call.receive<AccountChangeNickname>()
 
-                val collection = mongoDB.getCollection("accounts")
-                val document = collection.find(Document("token", account.token)).first()
+                val document = accountsCollection.find(Document("token", account.token)).first()
 
                 if (document == null) {
                     call.respond(HttpStatusCode.NotFound, "Token not found")
@@ -151,12 +145,35 @@ fun Route.accountController() {
                     if (!validateNickname(account.newNickname)) {
                         call.respond(HttpStatusCode.BadRequest, "Invalid nickname")
                         return@post
-                    } else if (checkNicknameExists(collection, account.newNickname)) {
+                    } else if (!checkNicknameExists(accountsCollection, account.newNickname)) {
                         call.respond(HttpStatusCode.Conflict, "Nickname already exists")
                         return@post
                     } else {
-                        collection.updateOne(Document("token", account.token), Document("\$set", Document("nickname", account.newNickname)))
+                        accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("nickname", account.newNickname)))
                         call.respond(HttpStatusCode.OK, "Nickname changed")
+                    }
+                }
+            }
+
+            post("/password") {
+                val account = call.receive<AccountChangePassword>()
+
+                val document = accountsCollection.find(Document("nickname", account.nickname)).first()
+
+                if (document == null) {
+                    call.respond(HttpStatusCode.NotFound, "Account not found")
+                    return@post
+                } else {
+                    if (!validatePassword(account.newPassword)) {
+                        call.respond(HttpStatusCode.BadRequest, "Invalid new password")
+                        return@post
+                    } else {
+                        if (validateUserCredentials(accountsCollection, AccountLogin(account.nickname, account.currentPassword))) {
+                            accountsCollection.updateOne(Document("nickname", account.nickname), Document("\$set", Document("password", hashPassword(account.newPassword))))
+                            call.respond(HttpStatusCode.OK, "Password changed")
+                        } else {
+                            call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+                        }
                     }
                 }
             }

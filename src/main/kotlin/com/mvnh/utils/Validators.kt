@@ -22,7 +22,7 @@ fun validateNickname(nickname: String): Boolean {
     return nicknameRegex.matches(nickname)
 }
 fun checkNicknameExists(collection: MongoCollection<Document>, nickname: String): Boolean {
-    return collection.find(Document("name", nickname)).first() != null
+    return collection.find(Document("nickname", nickname)).first() == null
 }
 
 // Password
@@ -37,7 +37,7 @@ fun hashPassword(password: String): String {
 
 fun validateUserCredentials(collection: MongoCollection<Document>, account: AccountLogin): Boolean {
     val document = collection.find(Document(
-        if ("@" in account.login) "email" else "name", account.login
+        if ("@" in account.login) "email" else "nickname", account.login
     )).first()
     return document != null && BCrypt.checkpw(account.password, document["password"] as String)
 }
