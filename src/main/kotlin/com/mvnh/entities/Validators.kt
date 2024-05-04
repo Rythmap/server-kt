@@ -42,10 +42,6 @@ fun validateUserCredentials(collection: MongoCollection<Document>, account: Acco
     return document != null && BCrypt.checkpw(account.password, document["password"] as String)
 }
 
-/*fun validateAccountLogin(account: AccountLogin): Boolean {
-    return if ("@" in account.login) validateEmail(account.login) else validateNickname(account.login) && validatePassword(account.password)
-}*/
-
 fun generateToken(): String {
     return UUID.randomUUID().toString()
 }

@@ -1,8 +1,5 @@
 package com.mvnh.controllers
 
-import com.mongodb.ConnectionString
-import com.mongodb.MongoClientSettings
-import com.mongodb.client.MongoClients
 import com.mvnh.entities.*
 import com.mvnh.entities.account.AccountLogin
 import com.mvnh.entities.account.AccountRegister
@@ -26,11 +23,7 @@ data class AccountInfoResponse(@SerialName("account_id") val accountID: String?,
                                @SerialName("created_at") val createdAt: String)
 
 fun Route.accountController() {
-    val mongoClientSettings = MongoClientSettings.builder()
-        .applyConnectionString(ConnectionString("mongodb://localhost:27017"))
-        .build()
-    val mongoClient = MongoClients.create(mongoClientSettings)
-    val mongoDB = mongoClient.getDatabase("rythmap")
+    val mongoDB = getMongoDatabase()
 
     route("/account") {
         post("/register") {
@@ -133,8 +126,12 @@ fun Route.accountController() {
                         if ("@" in login) "email" else "name", login
                     )).first()
 
-                    collection.deleteOne(document)
-                    call.respond(HttpStatusCode.OK, "Account deleted")
+                    if (document != null) {
+                        collection.deleteOne(document)
+                        call.respond(HttpStatusCode.OK, "Account deleted")
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "Account not found")
+                    }
                 }
             }
         }
