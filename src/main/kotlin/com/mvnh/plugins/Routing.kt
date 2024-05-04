@@ -1,6 +1,6 @@
 package com.mvnh.plugins
 
-import com.mvnh.controllers.accountController
+import com.mvnh.routes.accountController
 import io.ktor.server.application.*
 import io.ktor.server.plugins.swagger.*
 import io.ktor.server.response.*

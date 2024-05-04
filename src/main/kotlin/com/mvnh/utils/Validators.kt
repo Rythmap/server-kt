@@ -54,7 +54,7 @@ fun createAccountDocument(account: AccountRegister): Document {
     val document = Document()
     document["account_id"] = generateAccountID()
     document["token"] = generateToken()
-    document["name"] = account.nickname
+    document["nickname"] = account.nickname
     document["password"] = hashPassword(account.password)
     document["email"] = account.email
     document["created_at"] = Date()

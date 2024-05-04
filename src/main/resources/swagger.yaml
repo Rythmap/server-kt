@@ -100,6 +100,34 @@ paths:
                               type: string
                               example: Account deleted
 
+    /account/change/nickname:
+        post:
+            tags:
+              - Account
+            summary: Change account nickname
+            operationId: changeNickname
+            requestBody:
+              required: true
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                      new_nickname:
+                        type: string
+            responses:
+                '200':
+                    description: Success
+                    content:
+                      application/json:
+                        schema:
+                          type: object
+                          properties:
+                            message:
+                              type: string
+                              example: Nickname changed
 
 components:
     schemas:

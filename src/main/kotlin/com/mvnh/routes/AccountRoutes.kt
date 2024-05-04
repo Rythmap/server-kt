@@ -1,5 +1,6 @@
-package com.mvnh.controllers
+package com.mvnh.routes
 
+import com.mvnh.entities.account.AccountChangeNickname
 import com.mvnh.entities.account.AccountLogin
 import com.mvnh.entities.account.AccountRegister
 import com.mvnh.utils.*
@@ -83,7 +84,7 @@ fun Route.accountController() {
             }
         }
 
-        get("/info") {
+        get("/info/{token?}") {
             val token = call.parameters["token"]
             if (token == null) {
                 call.respond(HttpStatusCode.BadRequest, "Token not provided")
@@ -131,6 +132,31 @@ fun Route.accountController() {
                         call.respond(HttpStatusCode.OK, "Account deleted")
                     } else {
                         call.respond(HttpStatusCode.NotFound, "Account not found")
+                    }
+                }
+            }
+        }
+
+        route("/change") {
+            post("/nickname") {
+                val account = call.receive<AccountChangeNickname>()
+
+                val collection = mongoDB.getCollection("accounts")
+                val document = collection.find(Document("token", account.token)).first()
+
+                if (document == null) {
+                    call.respond(HttpStatusCode.NotFound, "Token not found")
+                    return@post
+                } else {
+                    if (!validateNickname(account.newNickname)) {
+                        call.respond(HttpStatusCode.BadRequest, "Invalid nickname")
+                        return@post
+                    } else if (checkNicknameExists(collection, account.newNickname)) {
+                        call.respond(HttpStatusCode.Conflict, "Nickname already exists")
+                        return@post
+                    } else {
+                        collection.updateOne(Document("token", account.token), Document("\$set", Document("nickname", account.newNickname)))
+                        call.respond(HttpStatusCode.OK, "Nickname changed")
                     }
                 }
             }
