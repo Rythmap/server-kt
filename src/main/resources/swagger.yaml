@@ -25,7 +25,19 @@ paths:
                 content:
                     application/json:
                       schema:
-                          $ref: '#/components/schemas/AccountRegisterResponseSuccess'
+                          $ref: '#/components/schemas/AccountAuthResponseSuccess'
+              '400':
+                description: Bad request
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/AccountAuthBadRequest'
+              '409':
+                description: Conflict
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/AccountAuthConflict'
 
     /account/login:
         post:
@@ -45,7 +57,19 @@ paths:
                 content:
                     application/json:
                       schema:
-                          $ref: '#/components/schemas/AccountLoginResponseSuccess'
+                          $ref: '#/components/schemas/AccountAuthResponseSuccess'
+              '400':
+                description: Bad request
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/AccountAuthBadRequest'
+              '401':
+                description: Unauthorized
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/AccountAuthUnauthorized'
 
     /account/info:
       get:
@@ -67,6 +91,12 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/AccountInfoResponseSuccess'
+          '404':
+            description: Not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AccountInfoNotFound'
 
     /account/delete:
         delete:
@@ -100,12 +130,12 @@ paths:
                               type: string
                               example: Account deleted
 
-    /account/change/nickname:
+    /account/update/nickname:
         post:
             tags:
               - Account
-            summary: Change account nickname
-            operationId: changeNickname
+            summary: Update account nickname
+            operationId: updateNickname
             requestBody:
               required: true
               content:
@@ -129,12 +159,12 @@ paths:
                               type: string
                               example: Nickname changed
 
-    /account/change/password:
+    /account/update/password:
         post:
             tags:
               - Account
-            summary: Change account password
-            operationId: changePassword
+            summary: Update account password
+            operationId: updatePassword
             requestBody:
               required: true
               content:
@@ -161,13 +191,56 @@ paths:
                             message:
                               type: string
                               example: Password changed
+    /account/update/info:
+        post:
+            tags:
+              - Account
+            summary: Update account information
+            operationId: UpdateInfo
+            requestBody:
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                      visible_name:
+                        type: string
+                      music_preferences:
+                        type: array
+                        items:
+                          type: string
+                      other_preferences:
+                        type: array
+                        items:
+                          type: string
+                      about:
+                        type: string
+            responses:
+                '200':
+                    description: Success
+                    content:
+                      application/json:
+                        schema:
+                          type: object
+                          properties:
+                            message:
+                              type: string
+                              example: Account updated
 
 components:
     schemas:
       AccountRegisterRequest:
+          required:
+            - nickname
+            - password
+            - email
           type: object
           properties:
               nickname:
+                type: string
+              visible_name:
                 type: string
               password:
                 type: string
@@ -175,16 +248,16 @@ components:
               email:
                 type: string
                 format: email
-      AccountRegisterResponseSuccess:
-          type: object
-          properties:
-              token:
+              music_preferences:
+                type: array
+                items:
+                  type: string
+              other_preferences:
+                type: array
+                items:
+                  type: string
+              about:
                 type: string
-              token_type:
-                type: string
-                enum:
-                  - bearer
-
       AccountLoginRequest:
           type: object
           properties:
@@ -193,15 +266,33 @@ components:
               password:
                 type: string
                 format: password
-      AccountLoginResponseSuccess:
-            type: object
-            properties:
-                token:
-                    type: string
-                token_type:
-                    type: string
-                    enum:
-                    - bearer
+
+      AccountAuthResponseSuccess:
+        type: object
+        properties:
+          token:
+            type: string
+          token_type:
+            type: string
+            example: Bearer
+      AccountAuthBadRequest:
+        type: object
+        properties:
+          message:
+            type: string
+            example: Empty fields
+      AccountAuthUnauthorized:
+        type: object
+        properties:
+          message:
+            type: string
+            example: Invalid credentials
+      AccountAuthConflict:
+        type: object
+        properties:
+          message:
+            type: string
+            example: Account already exists
 
       AccountInfoResponseSuccess:
           type: object
@@ -217,3 +308,9 @@ components:
             created_at:
               type: string
               format: date-time
+      AccountInfoNotFound:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Token not found

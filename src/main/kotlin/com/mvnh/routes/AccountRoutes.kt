@@ -1,9 +1,7 @@
 package com.mvnh.routes
 
-import com.mvnh.entities.account.AccountChangeNickname
-import com.mvnh.entities.account.AccountChangePassword
-import com.mvnh.entities.account.AccountLogin
-import com.mvnh.entities.account.AccountRegister
+import com.mongodb.client.model.Updates
+import com.mvnh.entities.account.*
 import com.mvnh.utils.*
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -18,13 +16,17 @@ import org.bson.Document
 data class AccountAuthResponse(val token: String, @SerialName("token_type") val tokenType: String = "bearer")
 
 @Serializable
-data class AccountInfoResponse(@SerialName("account_id") val accountID: String?,
+data class AccountInfoResponse(@SerialName("account_id") val accountID: String,
                                val token: String,
                                val nickname: String,
+                               @SerialName("visible_name") val visibleName: String = nickname,
                                val email: String,
-                               @SerialName("created_at") val createdAt: String)
+                               @SerialName("created_at") val createdAt: String,
+                               @SerialName("music_preferences") val musicPreferences: List<String>? = null,
+                               @SerialName("other_preferences") val otherPreferences: List<String>? = null,
+                               val about: String? = null)
 
-fun Route.accountController() {
+fun Route.accountRoutes() {
     val mongoDB = getMongoDatabase()
     val accountsCollection = mongoDB.getCollection("accounts")
 
@@ -33,18 +35,18 @@ fun Route.accountController() {
             val account = call.receive<AccountRegister>()
 
             if (account.nickname.isEmpty() || account.password.isEmpty() || account.email.isEmpty()) {
-                call.respond(HttpStatusCode.BadRequest, "Empty fields")
+                call.respond(HttpStatusCode.BadRequest, "Empty fields") // 400
                 return@post
             } else {
                 if (checkEmailExists(accountsCollection, account.email)) {
-                    call.respond(HttpStatusCode.Conflict, "Email already exists")
+                    call.respond(HttpStatusCode.Conflict, "Email already exists") // 409
                     return@post
                 } else if (checkNicknameExists(accountsCollection, account.nickname)) {
                     call.respond(HttpStatusCode.Conflict, "Nickname already exists")
                     return@post
                 } else {
                     if (!validateEmail(account.email)) {
-                        call.respond(HttpStatusCode.BadRequest, "Invalid email")
+                        call.respond(HttpStatusCode.BadRequest, "Invalid email") // 400
                         return@post
                     } else if (!validatePassword(account.password)) {
                         call.respond(HttpStatusCode.BadRequest, "Invalid password")
@@ -56,7 +58,7 @@ fun Route.accountController() {
                         val document = createAccountDocument(account)
 
                         accountsCollection.insertOne(document)
-                        call.respond(HttpStatusCode.OK, AccountAuthResponse(document["token"].toString()))
+                        call.respond(HttpStatusCode.OK, AccountAuthResponse(document["token"].toString())) // 200
                     }
                 }
             }
@@ -66,23 +68,23 @@ fun Route.accountController() {
             val credentials = call.receive<AccountLogin>()
 
             if (credentials.login.isEmpty() || credentials.password.isEmpty()) {
-                call.respond(HttpStatusCode.BadRequest, "Empty fields")
+                call.respond(HttpStatusCode.BadRequest, "Empty fields") // 400
                 return@post
             } else {
                 if (!validateUserCredentials(accountsCollection, credentials)) {
-                    call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+                    call.respond(HttpStatusCode.Unauthorized, "Invalid credentials") // 401
                     return@post
                 } else {
                     val document = accountsCollection.find(Document(
-                        if ("@" in credentials.login) "email" else "name", credentials.login
+                        if ("@" in credentials.login) "email" else "nickname", credentials.login
                     )).first()
 
-                    call.respond(HttpStatusCode.OK, AccountAuthResponse(document?.get("token").toString()))
+                    call.respond(HttpStatusCode.OK, AccountAuthResponse(document?.get("token").toString())) // 200
                 }
             }
         }
 
-        get("/info/{token?}") {
+        get("/info") {
             val token = call.parameters["token"]
             if (token == null) {
                 call.respond(HttpStatusCode.BadRequest, "Token not provided")
@@ -95,9 +97,10 @@ fun Route.accountController() {
                 } else {
                     call.respond(
                         AccountInfoResponse(
-                            accountID = document["account_id"] as? String,
+                            accountID = document["account_id"] as String,
                             token = document["token"] as String,
-                            nickname = document["name"] as String,
+                            nickname = document["nickname"] as String,
+                            visibleName = document["visible_name"] as String,
                             email = document["email"] as String,
                             createdAt = document["created_at"].toString()
                         )
@@ -119,7 +122,7 @@ fun Route.accountController() {
                     return@delete
                 } else {
                     val document = accountsCollection.find(Document(
-                        if ("@" in login) "email" else "name", login
+                        if ("@" in login) "email" else "nickname", login
                     )).first()
 
                     if (document != null) {
@@ -132,11 +135,27 @@ fun Route.accountController() {
             }
         }
 
-        route("/change") {
-            post("/nickname") {
-                val account = call.receive<AccountChangeNickname>()
+        route("/update") {
+            post("/info") {
+                val account = call.receive<AccountUpdateInfo>()
 
                 val document = accountsCollection.find(Document("token", account.token)).first()
+                if (document == null) {
+                    call.respond(HttpStatusCode.NotFound, "Token not found")
+                    return@post
+                } else {
+                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("visible_name", account.visibleName)))
+                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("music_preferences", account.musicPreferences)))
+                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("other_preferences", account.otherPreferences)))
+                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("about", account.about)))
+                    call.respond(HttpStatusCode.OK, "Account updated")
+                }
+            }
+
+            post("/nickname") {
+                val account = call.receive<AccountUpdateNickname>()
+
+                val document = accountsCollection.find(Document("nickname", account.currentNickname)).first()
 
                 if (document == null) {
                     call.respond(HttpStatusCode.NotFound, "Token not found")
@@ -149,14 +168,14 @@ fun Route.accountController() {
                         call.respond(HttpStatusCode.Conflict, "Nickname already exists")
                         return@post
                     } else {
-                        accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("nickname", account.newNickname)))
+                        accountsCollection.updateOne(Document("nickname", account.currentNickname), Document("\$set", Document("nickname", account.newNickname)))
                         call.respond(HttpStatusCode.OK, "Nickname changed")
                     }
                 }
             }
 
             post("/password") {
-                val account = call.receive<AccountChangePassword>()
+                val account = call.receive<AccountUpdatePassword>()
 
                 val document = accountsCollection.find(Document("nickname", account.nickname)).first()
 

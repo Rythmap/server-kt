@@ -13,7 +13,7 @@ fun validateEmail(email: String): Boolean {
     return emailRegex.matches(email)
 }
 fun checkEmailExists(collection: MongoCollection<Document>, email: String): Boolean {
-    return collection.find(Document("email", email)).first() != null
+    return collection.find(Document("email", email)).first() != null // If email exists, return true
 }
 
 // Nickname
@@ -22,7 +22,7 @@ fun validateNickname(nickname: String): Boolean {
     return nicknameRegex.matches(nickname)
 }
 fun checkNicknameExists(collection: MongoCollection<Document>, nickname: String): Boolean {
-    return collection.find(Document("nickname", nickname)).first() == null
+    return collection.find(Document("nickname", nickname)).first() != null // If nickname exists, return true
 }
 
 // Password
@@ -55,8 +55,12 @@ fun createAccountDocument(account: AccountRegister): Document {
     document["account_id"] = generateAccountID()
     document["token"] = generateToken()
     document["nickname"] = account.nickname
+    document["visible_name"] = account.visibleName
     document["password"] = hashPassword(account.password)
     document["email"] = account.email
+    document["music_preferences"] = account.musicPreferences
+    document["other_preferences"] = account.otherPreferences
+    document["about"] = account.about
     document["created_at"] = Date()
     return document
 }
