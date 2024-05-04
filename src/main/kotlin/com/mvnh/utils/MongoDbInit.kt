@@ -1,4 +1,4 @@
-package com.mvnh.controllers
+package com.mvnh.utils
 
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings

@@ -1,8 +1,8 @@
 package com.mvnh.controllers
 
-import com.mvnh.entities.*
 import com.mvnh.entities.account.AccountLogin
 import com.mvnh.entities.account.AccountRegister
+import com.mvnh.utils.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*

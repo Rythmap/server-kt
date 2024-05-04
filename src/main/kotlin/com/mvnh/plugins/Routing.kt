@@ -8,7 +8,7 @@ import io.ktor.server.routing.*
 
 fun Application.configureRouting() {
     routing {
-        swaggerUI(path = "swagger", swaggerFile = "src/main/kotlin/com/mvnh/openapi/swagger.yaml")
+        swaggerUI(path = "swagger", swaggerFile = "src/main/resources/swagger.yaml")
     }
 
     routing {

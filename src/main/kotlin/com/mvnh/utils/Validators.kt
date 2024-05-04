@@ -1,4 +1,4 @@
-package com.mvnh.entities
+package com.mvnh.utils
 
 import com.mongodb.client.MongoCollection
 import com.mvnh.entities.account.AccountLogin
