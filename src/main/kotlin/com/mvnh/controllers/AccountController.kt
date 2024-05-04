@@ -32,84 +32,110 @@ fun Route.accountController() {
     val mongoClient = MongoClients.create(mongoClientSettings)
     val mongoDB = mongoClient.getDatabase("rythmap")
 
-    post("/account/register") {
-        val account = call.receive<AccountRegister>()
+    route("/account") {
+        post("/register") {
+            val account = call.receive<AccountRegister>()
 
-        if (account.nickname.isEmpty() || account.password.isEmpty() || account.email.isEmpty()) {
-            call.respond(HttpStatusCode.BadRequest, "Empty fields")
-            return@post
-        } else {
-            val collection = mongoDB.getCollection("accounts")
-
-            if (checkEmailExists(collection, account.email)) {
-                call.respond(HttpStatusCode.Conflict, "Email already exists")
-                return@post
-            } else if (checkNicknameExists(collection, account.nickname)) {
-                call.respond(HttpStatusCode.Conflict, "Nickname already exists")
+            if (account.nickname.isEmpty() || account.password.isEmpty() || account.email.isEmpty()) {
+                call.respond(HttpStatusCode.BadRequest, "Empty fields")
                 return@post
             } else {
-                if (!validateEmail(account.email)) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid email")
+                val collection = mongoDB.getCollection("accounts")
+
+                if (checkEmailExists(collection, account.email)) {
+                    call.respond(HttpStatusCode.Conflict, "Email already exists")
                     return@post
-                } else if (!validatePassword(account.password)) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid password")
-                    return@post
-                } else if (!validateNickname(account.nickname)) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid nickname")
+                } else if (checkNicknameExists(collection, account.nickname)) {
+                    call.respond(HttpStatusCode.Conflict, "Nickname already exists")
                     return@post
                 } else {
-                    val document = createAccountDocument(account)
+                    if (!validateEmail(account.email)) {
+                        call.respond(HttpStatusCode.BadRequest, "Invalid email")
+                        return@post
+                    } else if (!validatePassword(account.password)) {
+                        call.respond(HttpStatusCode.BadRequest, "Invalid password")
+                        return@post
+                    } else if (!validateNickname(account.nickname)) {
+                        call.respond(HttpStatusCode.BadRequest, "Invalid nickname")
+                        return@post
+                    } else {
+                        val document = createAccountDocument(account)
 
-                    collection.insertOne(document)
-                    call.respond(HttpStatusCode.OK, AccountAuthResponse(document["token"].toString()))
+                        collection.insertOne(document)
+                        call.respond(HttpStatusCode.OK, AccountAuthResponse(document["token"].toString()))
+                    }
                 }
             }
         }
-    }
 
-    post("/account/login") {
-        val credentials = call.receive<AccountLogin>()
+        post("/login") {
+            val credentials = call.receive<AccountLogin>()
 
-        if (credentials.login.isEmpty() || credentials.password.isEmpty()) {
-            call.respond(HttpStatusCode.BadRequest, "Empty fields")
-            return@post
-        } else {
-            val collection = mongoDB.getCollection("accounts")
-
-            if (!validateUserCredentials(collection, credentials)) {
-                call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+            if (credentials.login.isEmpty() || credentials.password.isEmpty()) {
+                call.respond(HttpStatusCode.BadRequest, "Empty fields")
                 return@post
             } else {
-                val document = collection.find(Document(
-                    if ("@" in credentials.login) "email" else "name", credentials.login
-                )).first()
+                val collection = mongoDB.getCollection("accounts")
 
-                call.respond(HttpStatusCode.OK, AccountAuthResponse(document?.get("token").toString()))
+                if (!validateUserCredentials(collection, credentials)) {
+                    call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+                    return@post
+                } else {
+                    val document = collection.find(Document(
+                        if ("@" in credentials.login) "email" else "name", credentials.login
+                    )).first()
+
+                    call.respond(HttpStatusCode.OK, AccountAuthResponse(document?.get("token").toString()))
+                }
             }
         }
-    }
 
-    get("/account/info") {
-        val token = call.parameters["token"]
-        if (token == null) {
-            call.respond(HttpStatusCode.BadRequest, "Token not provided")
-            return@get
-        } else {
-            val collection = mongoDB.getCollection("accounts")
-            val document = collection.find(Document("token", token)).first()
-            if (document == null) {
-                call.respond(HttpStatusCode.NotFound, "Token not found")
+        get("/info") {
+            val token = call.parameters["token"]
+            if (token == null) {
+                call.respond(HttpStatusCode.BadRequest, "Token not provided")
                 return@get
             } else {
-                call.respond(
-                    AccountInfoResponse(
-                        accountID = document["account_id"] as? String,
-                        token = document["token"] as String,
-                        nickname = document["name"] as String,
-                        email = document["email"] as String,
-                        createdAt = document["created_at"].toString()
+                val collection = mongoDB.getCollection("accounts")
+                val document = collection.find(Document("token", token)).first()
+                if (document == null) {
+                    call.respond(HttpStatusCode.NotFound, "Token not found")
+                    return@get
+                } else {
+                    call.respond(
+                        AccountInfoResponse(
+                            accountID = document["account_id"] as? String,
+                            token = document["token"] as String,
+                            nickname = document["name"] as String,
+                            email = document["email"] as String,
+                            createdAt = document["created_at"].toString()
+                        )
                     )
-                )
+                }
+            }
+        }
+
+        delete("/delete") {
+            val login = call.parameters["login"]
+            val password = call.parameters["password"]
+
+            if (login == null || password == null) {
+                call.respond(HttpStatusCode.BadRequest, "Empty fields")
+                return@delete
+            } else {
+                val collection = mongoDB.getCollection("accounts")
+
+                if (!validateUserCredentials(collection, AccountLogin(login, password))) {
+                    call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+                    return@delete
+                } else {
+                    val document = collection.find(Document(
+                        if ("@" in login) "email" else "name", login
+                    )).first()
+
+                    collection.deleteOne(document)
+                    call.respond(HttpStatusCode.OK, "Account deleted")
+                }
             }
         }
     }
