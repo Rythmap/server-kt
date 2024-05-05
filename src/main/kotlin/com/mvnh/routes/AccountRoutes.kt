@@ -19,19 +19,21 @@ data class AccountInfoPrivateResponse(@SerialName("account_id") val accountID: S
                                val token: String,
                                val nickname: String,
                                @SerialName("visible_name") val visibleName: AccountVisibleName?,
+                               val about: String? = null,
                                val email: String,
                                @SerialName("music_preferences") val musicPreferences: List<String>? = null,
                                @SerialName("other_preferences") val otherPreferences: List<String>? = null,
-                               val about: String? = null,
+                               @SerialName("last_tracks") val lastTracks: AccountLastTracks? = null,
                                @SerialName("created_at") val createdAt: String)
 
 @Serializable
 data class AccountInfoPublicResponse(@SerialName("account_id") val accountID: String,
                                val nickname: String,
                                @SerialName("visible_name") val visibleName: AccountVisibleName?,
+                               val about: String? = null,
                                @SerialName("music_preferences") val musicPreferences: List<String>? = null,
                                @SerialName("other_preferences") val otherPreferences: List<String>? = null,
-                               val about: String? = null,
+                               @SerialName("last_tracks") val lastTracks: AccountLastTracks? = null,
                                @SerialName("created_at") val createdAt: String)
 
 fun Route.accountRoutes() {
@@ -105,6 +107,7 @@ fun Route.accountRoutes() {
                         return@get
                     } else {
                         val visibleNameDocument = document["visible_name"] as Document?
+                        val lastTracksDocument = document["last_tracks"] as Document?
                         call.respond(
                             AccountInfoPublicResponse(
                                 accountID = document["account_id"] as String,
@@ -115,6 +118,11 @@ fun Route.accountRoutes() {
                                 ),
                                 musicPreferences = document["music_preferences"] as List<String>?,
                                 otherPreferences = document["other_preferences"] as List<String>?,
+                                lastTracks = AccountLastTracks(
+                                    yandexTrackID = lastTracksDocument?.get("yandex_track_id") as String?,
+                                    spotifyTrackID = lastTracksDocument?.get("spotify_track_id") as String?
+                                ),
+                                about = document["about"] as String?,
                                 createdAt = document["created_at"].toString()
                             )
                         )
@@ -134,6 +142,7 @@ fun Route.accountRoutes() {
                         return@get
                     } else {
                         val visibleNameDocument = document["visible_name"] as Document?
+                        val lastTracksDocument = document["last_tracks"] as Document?
                         call.respond(
                             AccountInfoPrivateResponse(
                                 accountID = document["account_id"] as String,
@@ -145,6 +154,10 @@ fun Route.accountRoutes() {
                                 ),
                                 musicPreferences = document["music_preferences"] as List<String>?,
                                 otherPreferences = document["other_preferences"] as List<String>?,
+                                lastTracks = AccountLastTracks(
+                                    yandexTrackID = lastTracksDocument?.get("yandex_track_id") as String?,
+                                    spotifyTrackID = lastTracksDocument?.get("spotify_track_id") as String?
+                                ),
                                 about = document["about"] as String?,
                                 email = document["email"] as String,
                                 createdAt = document["created_at"].toString()

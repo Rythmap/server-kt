@@ -6,6 +6,9 @@ info:
 tags:
   - name: Account
     description: Account operations
+  - name: Music
+    description: Music operations
+
 paths:
     /account/register:
         post:
@@ -259,6 +262,54 @@ paths:
                             message:
                               type: string
                               example: Account updated
+
+    /music/yandex/track/get_and_save_current:
+        get:
+            tags:
+              - Music
+            summary: Get current track ID from Yandex Music and save it to Rythmap account
+            operationId: getYandexCurrentTrack
+            parameters:
+              - name: yandexToken
+                in: query
+                description: Yandex Music account token
+                required: true
+                schema:
+                  type: string
+              - name: rythmapToken
+                in: query
+                description: Rythmap account token
+                required: true
+                schema:
+                  type: string
+            responses:
+                '200':
+                    description: Success
+                    content:
+                      application/json:
+                        schema:
+                          type: object
+
+    /music/yandex/track/info:
+        get:
+            tags:
+              - Music
+            summary: Get track information from Yandex Music
+            operationId: getYandexTrackInfo
+            parameters:
+              - name: trackID
+                in: query
+                description: Yandex Music track ID
+                required: true
+                schema:
+                  type: string
+            responses:
+                '200':
+                    description: Success
+                    content:
+                      application/json:
+                        schema:
+                          type: object
 
 components:
     schemas:

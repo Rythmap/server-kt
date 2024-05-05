@@ -10,4 +10,5 @@ data class AccountRegister(val nickname: String,
                            val email: String,
                            @SerialName("music_preferences") val musicPreferences: List<String>? = null,
                            @SerialName("other_preferences") val otherPreferences: List<String>? = null,
+                           @SerialName("last_tracks") val lastTracks: AccountLastTracks? = null,
                            val about: String? = null)
