@@ -15,11 +15,20 @@ import org.bson.Document
 data class AccountAuthResponse(val token: String, @SerialName("token_type") val tokenType: String = "bearer")
 
 @Serializable
-data class AccountInfoResponse(@SerialName("account_id") val accountID: String,
+data class AccountInfoPrivateResponse(@SerialName("account_id") val accountID: String,
                                val token: String,
                                val nickname: String,
                                @SerialName("visible_name") val visibleName: AccountVisibleName?,
                                val email: String,
+                               @SerialName("music_preferences") val musicPreferences: List<String>? = null,
+                               @SerialName("other_preferences") val otherPreferences: List<String>? = null,
+                               val about: String? = null,
+                               @SerialName("created_at") val createdAt: String)
+
+@Serializable
+data class AccountInfoPublicResponse(@SerialName("account_id") val accountID: String,
+                               val nickname: String,
+                               @SerialName("visible_name") val visibleName: AccountVisibleName?,
                                @SerialName("music_preferences") val musicPreferences: List<String>? = null,
                                @SerialName("other_preferences") val otherPreferences: List<String>? = null,
                                val about: String? = null,
@@ -83,34 +92,65 @@ fun Route.accountRoutes() {
             }
         }
 
-        get("/info") {
-            val token = call.parameters["token"]
-            if (token == null) {
-                call.respond(HttpStatusCode.BadRequest, "Token not provided")
-                return@get
-            } else {
-                val document = accountsCollection.find(Document("token", token)).first()
-                if (document == null) {
-                    call.respond(HttpStatusCode.NotFound, "Token not found")
+        route("/info") {
+            get("/public") {
+                val nickname = call.parameters["nickname"]
+                if (nickname == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Nickname not provided")
                     return@get
                 } else {
-                    val visibleNameDocument = document["visible_name"] as Document?
-                    call.respond(
-                        AccountInfoResponse(
-                            accountID = document["account_id"] as String,
-                            token = document["token"] as String,
-                            nickname = document["nickname"] as String,
-                            visibleName = AccountVisibleName(
-                                name = visibleNameDocument?.get("name") as String?,
-                                surname = visibleNameDocument?.get("surname") as String?
-                            ),
-                            musicPreferences = document["music_preferences"] as List<String>?,
-                            otherPreferences = document["other_preferences"] as List<String>?,
-                            about = document["about"] as String?,
-                            email = document["email"] as String,
-                            createdAt = document["created_at"].toString()
+                    val document = accountsCollection.find(Document("nickname", nickname)).first()
+                    if (document == null) {
+                        call.respond(HttpStatusCode.NotFound, "Account not found")
+                        return@get
+                    } else {
+                        val visibleNameDocument = document["visible_name"] as Document?
+                        call.respond(
+                            AccountInfoPublicResponse(
+                                accountID = document["account_id"] as String,
+                                nickname = document["nickname"] as String,
+                                visibleName = AccountVisibleName(
+                                    name = visibleNameDocument?.get("name") as String?,
+                                    surname = visibleNameDocument?.get("surname") as String?
+                                ),
+                                musicPreferences = document["music_preferences"] as List<String>?,
+                                otherPreferences = document["other_preferences"] as List<String>?,
+                                createdAt = document["created_at"].toString()
+                            )
                         )
-                    )
+                    }
+                }
+            }
+
+            get("/private") {
+                val token = call.parameters["token"]
+                if (token == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Token not provided")
+                    return@get
+                } else {
+                    val document = accountsCollection.find(Document("token", token)).first()
+                    if (document == null) {
+                        call.respond(HttpStatusCode.NotFound, "Token not found")
+                        return@get
+                    } else {
+                        val visibleNameDocument = document["visible_name"] as Document?
+                        call.respond(
+                            AccountInfoPrivateResponse(
+                                accountID = document["account_id"] as String,
+                                token = document["token"] as String,
+                                nickname = document["nickname"] as String,
+                                visibleName = AccountVisibleName(
+                                    name = visibleNameDocument?.get("name") as String?,
+                                    surname = visibleNameDocument?.get("surname") as String?
+                                ),
+                                musicPreferences = document["music_preferences"] as List<String>?,
+                                otherPreferences = document["other_preferences"] as List<String>?,
+                                about = document["about"] as String?,
+                                email = document["email"] as String,
+                                createdAt = document["created_at"].toString()
+                            )
+                        )
+                    }
                 }
             }
         }

@@ -71,12 +71,38 @@ paths:
                     schema:
                       $ref: '#/components/schemas/AccountAuthUnauthorized'
 
-    /account/info:
+    /account/info/public:
       get:
         tags:
           - Account
-        summary: Get account information
-        operationId: getAccountInfo
+        summary: Get account public information
+        operationId: getAccountPublicInfo
+        parameters:
+          - name: nickname
+            in: query
+            description: Account nickname
+            required: true
+            schema:
+              type: string
+        responses:
+          '200':
+            description: Success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AccountInfoPublicResponseSuccess'
+          '404':
+            description: Not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AccountInfoNotFound'
+    /account/info/private:
+      get:
+        tags:
+          - Account
+        summary: Get account private information
+        operationId: getAccountPrivateInfo
         parameters:
           - name: token
             in: query
@@ -90,7 +116,7 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/AccountInfoResponseSuccess'
+                  $ref: '#/components/schemas/AccountInfoPrivateResponseSuccess'
           '404':
             description: Not found
             content:
@@ -304,7 +330,34 @@ components:
             type: string
             example: Account already exists
 
-      AccountInfoResponseSuccess:
+      AccountInfoPublicResponseSuccess:
+          type: object
+          properties:
+            account_id:
+              type: string
+            nickname:
+              type: string
+            visible_name:
+              type: object
+              properties:
+                  name:
+                    type: string
+                  surname:
+                    type: string
+            music_preferences:
+                type: array
+                items:
+                    type: string
+            other_preferences:
+                type: array
+                items:
+                    type: string
+            about:
+              type: string
+            created_at:
+              type: string
+              format: date-time
+      AccountInfoPrivateResponseSuccess:
           type: object
           properties:
             account_id:
@@ -313,7 +366,25 @@ components:
               type: string
             nickname:
               type: string
+            visible_name:
+              type: object
+              properties:
+                  name:
+                    type: string
+                  surname:
+                    type: string
             email:
+              type: string
+              format: email
+            music_preferences:
+                type: array
+                items:
+                    type: string
+            other_preferences:
+                type: array
+                items:
+                    type: string
+            about:
               type: string
             created_at:
               type: string
@@ -323,4 +394,4 @@ components:
           properties:
             message:
               type: string
-              example: Token not found
+              example: Token or nickname not found
