@@ -3,13 +3,16 @@ package com.mvnh.routes
 import com.mvnh.entities.account.*
 import com.mvnh.utils.*
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.utils.io.streams.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.bson.Document
+import java.io.File
 
 @Serializable
 data class AccountAuthResponse(val token: String, @SerialName("token_type") val tokenType: String = "bearer")
@@ -85,9 +88,11 @@ fun Route.accountRoutes() {
                     call.respond(HttpStatusCode.Unauthorized, "Invalid credentials") // 401
                     return@post
                 } else {
-                    val document = accountsCollection.find(Document(
-                        if ("@" in credentials.login) "email" else "nickname", credentials.login
-                    )).first()
+                    val document = accountsCollection.find(
+                        Document(
+                            if ("@" in credentials.login) "email" else "nickname", credentials.login
+                        )
+                    ).first()
 
                     call.respond(HttpStatusCode.OK, AccountAuthResponse(document?.get("token").toString())) // 200
                 }
@@ -166,6 +171,33 @@ fun Route.accountRoutes() {
                     }
                 }
             }
+
+            get("/avatar") {
+                val nickname = call.parameters["nickname"]
+
+                if (nickname == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Nickname not provided")
+                    return@get
+                } else {
+                    val document = accountsCollection.find(Document("nickname", nickname)).first()
+                    if (document == null) {
+                        call.respond(HttpStatusCode.NotFound, "Account not found")
+                        return@get
+                    } else {
+                        val avatar = document["avatar"] as String?
+                        if (avatar != null) {
+                            val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\avatars\\$avatar.jpeg")
+                            if (file.exists()) {
+                                call.respondFile(file)
+                            } else {
+                                call.respond(HttpStatusCode.NotFound, "Avatar not found")
+                            }
+                        } else {
+                            call.respond(HttpStatusCode.NotFound, "Avatar not found")
+                        }
+                    }
+                }
+            }
         }
 
         delete("/delete") {
@@ -180,9 +212,11 @@ fun Route.accountRoutes() {
                     call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
                     return@delete
                 } else {
-                    val document = accountsCollection.find(Document(
-                        if ("@" in login) "email" else "nickname", login
-                    )).first()
+                    val document = accountsCollection.find(
+                        Document(
+                            if ("@" in login) "email" else "nickname", login
+                        )
+                    ).first()
 
                     if (document != null) {
                         accountsCollection.deleteOne(document)
@@ -203,11 +237,26 @@ fun Route.accountRoutes() {
                     call.respond(HttpStatusCode.NotFound, "Token not found")
                     return@post
                 } else {
-                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("visible_name.name", account.visibleName?.name)))
-                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("visible_name.surname", account.visibleName?.surname)))
-                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("music_preferences", account.musicPreferences)))
-                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("other_preferences", account.otherPreferences)))
-                    accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("about", account.about)))
+                    accountsCollection.updateOne(
+                        Document("token", account.token),
+                        Document("\$set", Document("visible_name.name", account.visibleName?.name))
+                    )
+                    accountsCollection.updateOne(
+                        Document("token", account.token),
+                        Document("\$set", Document("visible_name.surname", account.visibleName?.surname))
+                    )
+                    accountsCollection.updateOne(
+                        Document("token", account.token),
+                        Document("\$set", Document("music_preferences", account.musicPreferences))
+                    )
+                    accountsCollection.updateOne(
+                        Document("token", account.token),
+                        Document("\$set", Document("other_preferences", account.otherPreferences))
+                    )
+                    accountsCollection.updateOne(
+                        Document("token", account.token),
+                        Document("\$set", Document("about", account.about))
+                    )
                     call.respond(HttpStatusCode.OK, "Account updated")
                 }
             }
@@ -228,7 +277,10 @@ fun Route.accountRoutes() {
                         call.respond(HttpStatusCode.Conflict, "Nickname already exists")
                         return@post
                     } else {
-                        accountsCollection.updateOne(Document("token", account.token), Document("\$set", Document("nickname", account.newNickname)))
+                        accountsCollection.updateOne(
+                            Document("token", account.token),
+                            Document("\$set", Document("nickname", account.newNickname))
+                        )
                         call.respond(HttpStatusCode.OK, "Nickname changed")
                     }
                 }
@@ -247,11 +299,56 @@ fun Route.accountRoutes() {
                         call.respond(HttpStatusCode.BadRequest, "Invalid new password")
                         return@post
                     } else {
-                        if (validateUserCredentials(accountsCollection, AccountLogin(account.nickname, account.currentPassword))) {
-                            accountsCollection.updateOne(Document("nickname", account.nickname), Document("\$set", Document("password", hashPassword(account.newPassword))))
+                        if (validateUserCredentials(
+                                accountsCollection,
+                                AccountLogin(account.nickname, account.currentPassword)
+                            )
+                        ) {
+                            accountsCollection.updateOne(
+                                Document("nickname", account.nickname),
+                                Document("\$set", Document("password", hashPassword(account.newPassword)))
+                            )
                             call.respond(HttpStatusCode.OK, "Password changed")
                         } else {
                             call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+                        }
+                    }
+                }
+            }
+
+            post("/avatar") {
+                val token = call.parameters["token"]
+
+                val multipart = call.receiveMultipart()
+                val part = multipart.readPart() as PartData.FileItem
+
+                if (token == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Token not provided")
+                    return@post
+                } else {
+                    val nickname = accountsCollection.find(Document("token", token)).first()?.get("nickname") as String
+                    if (nickname == null) {
+                        call.respond(HttpStatusCode.NotFound, "Token not found")
+                        return@post
+                    } else {
+                        val validContentTypes = listOf(ContentType.Image.JPEG, ContentType.Image.PNG)
+                        if (part.contentType !in validContentTypes) {
+                            call.respond(HttpStatusCode.BadRequest, "Invalid file type")
+                            return@post
+                        } else { // need to check if file is not too big but not sure how
+                            val fileName = "$nickname.jpeg"
+                            val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\avatars\\$fileName")
+                            part.streamProvider().use { its ->
+                                file.outputStream().buffered().use {
+                                    its.copyTo(it)
+                                }
+                            }
+
+                            accountsCollection.updateOne(
+                                Document("token", token),
+                                Document("\$set", Document("avatar", fileName.replace(".jpeg", "")))
+                            )
+                            call.respond(HttpStatusCode.OK, "Avatar updated")
                         }
                     }
                 }
