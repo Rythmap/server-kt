@@ -9,6 +9,7 @@ import kotlinx.serialization.json.*
 import org.bson.Document
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import kotlin.math.log
 
 fun Route.musicRoutes() {
     val mongoDB = getMongoDatabase()
@@ -24,8 +25,10 @@ fun Route.musicRoutes() {
                         call.respond(HttpStatusCode.BadRequest, "Token is missing")
                         return@get
                     } else {
-                        val pythonPath = "C:\\Users\\13mvnh\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
-                        val scriptPath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\music\\yandex\\get_current_track.py"
+                        //val pythonPath = "C:\\Users\\13mvnh\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+                        //val scriptPath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\music\\yandex\\get_current_track.py"
+                        val pythonPath = "/usr/bin/python3"
+                        val scriptPath = "/home/Rythmap-server-ktor/music/yandex/get_current_track.py"
                         val process = ProcessBuilder(pythonPath, scriptPath, "--token=$yandexToken").start()
 
                         val outputReader = BufferedReader(InputStreamReader(process.inputStream))
@@ -35,6 +38,7 @@ fun Route.musicRoutes() {
                         val error = errorReader.readText()
 
                         if (output != null) {
+                            call.application.log.info(output)
                             val jsonOutput = Json.parseToJsonElement(output).jsonObject
 
                             val document = accountsCollection.find(Document("token", rythmapToken)).first()
@@ -49,10 +53,9 @@ fun Route.musicRoutes() {
                             } else {
                                 call.respond(HttpStatusCode.BadRequest, "Output is not null but token is invalid")
                             }
-                        } else if (error != null) {
-                            call.respond(HttpStatusCode.InternalServerError, error)
-                        } else {
-                            call.respond(HttpStatusCode.InternalServerError, "Unknown error")
+                        }
+                        if (error != null) {
+                            call.application.log.error(error)
                         }
                     }
                 }
@@ -63,8 +66,10 @@ fun Route.musicRoutes() {
                         call.respond(HttpStatusCode.BadRequest, "Track ID is missing")
                         return@get
                     } else {
-                        val pythonPath = "C:\\Users\\13mvnh\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
-                        val scriptPath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\music\\yandex\\get_track_info.py"
+                        //val pythonPath = "C:\\Users\\13mvnh\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+                        //val scriptPath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\music\\yandex\\get_track_info.py"
+                        val pythonPath = "/usr/bin/python3"
+                        val scriptPath = "/home/Rythmap-server-ktor/music/yandex/get_track_info.py"
                         val process = ProcessBuilder(pythonPath, scriptPath, "--trackID=$trackID").start()
 
                         val outputReader = BufferedReader(InputStreamReader(process.inputStream))

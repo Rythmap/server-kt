@@ -8,7 +8,6 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.utils.io.streams.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.bson.Document
@@ -172,7 +171,7 @@ fun Route.accountRoutes() {
                 }
             }
 
-            get("/avatar") {
+            get("/media/{type}") {
                 val nickname = call.parameters["nickname"]
 
                 if (nickname == null) {
@@ -184,16 +183,35 @@ fun Route.accountRoutes() {
                         call.respond(HttpStatusCode.NotFound, "Account not found")
                         return@get
                     } else {
-                        val avatar = document["avatar"] as String?
-                        if (avatar != null) {
-                            val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\avatars\\$avatar.jpeg")
-                            if (file.exists()) {
-                                call.respondFile(file)
+                        if (call.parameters["type"] == "avatar") {
+                            val avatar = document["avatar"] as String?
+                            if (avatar != null) {
+                                //val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$avatar.jpeg")
+                                val file = File("/home/Rythmap-server-ktor/media/avatars/$avatar.jpeg")
+                                if (file.exists()) {
+                                    call.respondFile(file)
+                                } else {
+                                    call.respond(HttpStatusCode.NotFound, "Avatar not found")
+                                }
                             } else {
                                 call.respond(HttpStatusCode.NotFound, "Avatar not found")
                             }
+                        } else if (call.parameters["type"] == "banner") {
+                            val banner = document["banner"] as String?
+                            if (banner != null) {
+                                //val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$banner.jpeg")
+                                val file = File("/home/Rythmap-server-ktor/media/banners/$banner.jpeg")
+                                if (file.exists()) {
+                                    call.respondFile(file)
+                                } else {
+                                    call.respond(HttpStatusCode.NotFound, "Banner not found")
+                                }
+                            } else {
+                                call.respond(HttpStatusCode.NotFound, "Banner not found")
+                            }
                         } else {
-                            call.respond(HttpStatusCode.NotFound, "Avatar not found")
+                            call.respond(HttpStatusCode.BadRequest, "Invalid media type")
+                            return@get
                         }
                     }
                 }
@@ -316,12 +334,11 @@ fun Route.accountRoutes() {
                 }
             }
 
-            post("/avatar") {
+            post("/media/{type}") {
                 val token = call.parameters["token"]
 
                 val multipart = call.receiveMultipart()
                 val part = multipart.readPart() as PartData.FileItem
-
                 if (token == null) {
                     call.respond(HttpStatusCode.BadRequest, "Token not provided")
                     return@post
@@ -337,18 +354,38 @@ fun Route.accountRoutes() {
                             return@post
                         } else { // need to check if file is not too big but not sure how
                             val fileName = "$nickname.jpeg"
-                            val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\avatars\\$fileName")
-                            part.streamProvider().use { its ->
-                                file.outputStream().buffered().use {
-                                    its.copyTo(it)
+                            if (call.parameters["type"] == "avatar") {
+                                //val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$fileName")
+                                val file = File("/home/Rythmap-server-ktor/media/avatars/$fileName")
+                                part.streamProvider().use { its ->
+                                    file.outputStream().buffered().use {
+                                        its.copyTo(it)
+                                    }
                                 }
-                            }
 
-                            accountsCollection.updateOne(
-                                Document("token", token),
-                                Document("\$set", Document("avatar", fileName.replace(".jpeg", "")))
-                            )
-                            call.respond(HttpStatusCode.OK, "Avatar updated")
+                                accountsCollection.updateOne(
+                                    Document("token", token),
+                                    Document("\$set", Document("avatar", fileName.replace(".jpeg", "")))
+                                )
+                                call.respond(HttpStatusCode.OK, "Avatar updated")
+                            } else if (call.parameters["type"] == "banner") {
+                                //val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$fileName")
+                                val file = File("/home/Rythmap-server-ktor/media/banners/$fileName")
+                                part.streamProvider().use { its ->
+                                    file.outputStream().buffered().use {
+                                        its.copyTo(it)
+                                    }
+                                }
+
+                                accountsCollection.updateOne(
+                                    Document("token", token),
+                                    Document("\$set", Document("banner", fileName.replace(".jpeg", "")))
+                                )
+                                call.respond(HttpStatusCode.OK, "Banner updated")
+                            } else {
+                                call.respond(HttpStatusCode.BadRequest, "Invalid media type")
+                                return@post
+                            }
                         }
                     }
                 }

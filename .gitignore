@@ -36,4 +36,4 @@ out/
 .vscode/
 
 __pycache__/
-src/main/kotlin/com/mvnh/avatars/
+src/main/kotlin/com/mvnh/media/

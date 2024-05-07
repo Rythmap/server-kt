@@ -8,7 +8,7 @@ plugins {
     id("io.ktor.plugin") version "2.3.10"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.23"
 }
-
+//   /usr/lib/java -jar /home/Rythmap-server-kt/com.mvnh.rythmap-server-all.jar
 group = "com.mvnh"
 version = "0.0.1"
 

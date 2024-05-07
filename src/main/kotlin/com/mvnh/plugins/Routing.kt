@@ -9,9 +9,9 @@ import io.ktor.server.routing.*
 
 fun Application.configureRouting() {
     routing {
-        swaggerUI(path = "swagger", swaggerFile = "src/main/resources/swagger.yaml")
+        swaggerUI(path = "swagger", swaggerFile = "/home/Rythmap-server-ktor/swagger.yaml")
     }
-
+    
     routing {
         get("/") {
             call.respondRedirect("/swagger")

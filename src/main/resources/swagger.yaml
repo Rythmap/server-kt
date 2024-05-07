@@ -127,16 +127,22 @@ paths:
                 schema:
                   $ref: '#/components/schemas/AccountInfoNotFound'
 
-    /account/info/avatar:
+    /account/info/media/{type}:
       get:
         tags:
           - Account
-        summary: Get account avatar
-        operationId: getAvatar
+        summary: Get account media
+        operationId: getMedia
         parameters:
           - name: nickname
             in: query
             description: Account nickname
+            required: true
+            schema:
+              type: string
+          - name: type
+            in: path
+            description: Media type
             required: true
             schema:
               type: string
@@ -245,16 +251,22 @@ paths:
                             message:
                               type: string
                               example: Password changed
-    /account/update/avatar:
+    /account/update/media/{type}:
       post:
         tags:
           - Account
-        summary: Update account avatar
-        operationId: updateAvatar
+        summary: Update account media
+        operationId: updateMedia
         parameters:
           - name: token
             in: query
             description: Account token
+            required: true
+            schema:
+              type: string
+          - name: type
+            in: path
+            description: Media type
             required: true
             schema:
               type: string
@@ -265,7 +277,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  avatar:
+                  media:
                     type: string
                     format: binary
         responses:
