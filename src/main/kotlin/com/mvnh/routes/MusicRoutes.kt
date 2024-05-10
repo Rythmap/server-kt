@@ -5,11 +5,12 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.bson.Document
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import kotlin.math.log
 
 fun Route.musicRoutes() {
     val mongoDB = getMongoDatabase()
