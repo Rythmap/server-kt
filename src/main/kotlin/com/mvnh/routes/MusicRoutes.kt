@@ -46,7 +46,10 @@ fun Route.musicRoutes() {
                             if (document != null) {
                                 val trackID = jsonOutput["id"]?.jsonPrimitive?.content
                                 if (trackID != null) {
-                                    accountsCollection.updateOne(Document("token", rythmapToken), Document("\$set", Document("last_tracks.yandex_track_id", trackID)))
+                                    accountsCollection.updateOne(
+                                        Document("token", rythmapToken),
+                                        Document("\$set", Document("last_tracks.yandex_track_id", trackID))
+                                    )
                                     call.respond(HttpStatusCode.OK, trackID)
                                 } else {
                                     call.respond(HttpStatusCode.BadRequest, "Error while getting track ID")
@@ -60,7 +63,7 @@ fun Route.musicRoutes() {
                         }
                     }
                 }
-                
+
                 get("/info") {
                     val trackID = call.parameters["trackID"]
                     if (trackID == null) {
@@ -91,7 +94,5 @@ fun Route.musicRoutes() {
                 }
             }
         }
-
-
     }
 }

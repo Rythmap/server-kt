@@ -17,26 +17,32 @@ import java.io.File
 data class AccountAuthResponse(val token: String, @SerialName("token_type") val tokenType: String = "bearer")
 
 @Serializable
-data class AccountInfoPrivateResponse(@SerialName("account_id") val accountID: String,
-                               val token: String,
-                               val nickname: String,
-                               @SerialName("visible_name") val visibleName: AccountVisibleName?,
-                               val about: String? = null,
-                               val email: String,
-                               @SerialName("music_preferences") val musicPreferences: List<String>? = null,
-                               @SerialName("other_preferences") val otherPreferences: List<String>? = null,
-                               @SerialName("last_tracks") val lastTracks: AccountLastTracks? = null,
-                               @SerialName("created_at") val createdAt: String)
+data class AccountInfoPrivateResponse(
+    @SerialName("account_id") val accountID: String,
+    val token: String,
+    val nickname: String,
+    @SerialName("visible_name") val visibleName: AccountVisibleName?,
+    val about: String? = null,
+    val email: String,
+    @SerialName("music_preferences") val musicPreferences: List<String>? = null,
+    @SerialName("other_preferences") val otherPreferences: List<String>? = null,
+    @SerialName("last_tracks") val lastTracks: AccountLastTracks? = null,
+    @SerialName("friends") val friends: List<String>? = null,
+    @SerialName("created_at") val createdAt: String
+)
 
 @Serializable
-data class AccountInfoPublicResponse(@SerialName("account_id") val accountID: String,
-                               val nickname: String,
-                               @SerialName("visible_name") val visibleName: AccountVisibleName?,
-                               val about: String? = null,
-                               @SerialName("music_preferences") val musicPreferences: List<String>? = null,
-                               @SerialName("other_preferences") val otherPreferences: List<String>? = null,
-                               @SerialName("last_tracks") val lastTracks: AccountLastTracks? = null,
-                               @SerialName("created_at") val createdAt: String)
+data class AccountInfoPublicResponse(
+    @SerialName("account_id") val accountID: String,
+    val nickname: String,
+    @SerialName("visible_name") val visibleName: AccountVisibleName?,
+    val about: String? = null,
+    @SerialName("music_preferences") val musicPreferences: List<String>? = null,
+    @SerialName("other_preferences") val otherPreferences: List<String>? = null,
+    @SerialName("last_tracks") val lastTracks: AccountLastTracks? = null,
+    @SerialName("friends") val friends: List<String>? = null,
+    @SerialName("created_at") val createdAt: String
+)
 
 fun Route.accountRoutes() {
     val mongoDB = getMongoDatabase()
@@ -112,7 +118,7 @@ fun Route.accountRoutes() {
                     } else {
                         val visibleNameDocument = document["visible_name"] as Document?
                         val lastTracksDocument = document["last_tracks"] as Document?
-                        call.respond(
+                        call.respond(HttpStatusCode.OK,
                             AccountInfoPublicResponse(
                                 accountID = document["account_id"] as String,
                                 nickname = document["nickname"] as String,

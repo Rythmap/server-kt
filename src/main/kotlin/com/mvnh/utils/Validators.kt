@@ -65,10 +65,6 @@ fun createAccountDocument(account: AccountRegister): Document {
     document["email"] = account.email
     document["music_preferences"] = account.musicPreferences
     document["other_preferences"] = account.otherPreferences
-    document["last_tracks"] = Document().apply {
-        put("yandex_track_id", account.lastTracks?.yandexTrackID)
-        put("spotify_track_id", account.lastTracks?.spotifyTrackID)
-    }
     document["created_at"] = Date()
     return document
 }

@@ -6,515 +6,915 @@ info:
 tags:
   - name: Account
     description: Account operations
+  - name: Friends system
+    description: Friends system operations
   - name: Music
     description: Music operations
 
 paths:
-    /account/register:
-        post:
-          tags:
-              - Account
-          summary: Register new account
-          operationId: registerAccount
-          requestBody:
-              required: true
-              content:
-                application/json:
-                    schema:
-                      $ref: '#/components/schemas/AccountRegisterRequest'
-          responses:
-              '200':
-                description: Success
-                content:
-                    application/json:
-                      schema:
-                          $ref: '#/components/schemas/AccountAuthResponseSuccess'
-              '400':
-                description: Bad request
-                content:
-                  application/json:
-                    schema:
-                      $ref: '#/components/schemas/AccountAuthBadRequest'
-              '409':
-                description: Conflict
-                content:
-                  application/json:
-                    schema:
-                      $ref: '#/components/schemas/AccountAuthConflict'
-
-    /account/login:
-        post:
-          tags:
-              - Account
-          summary: Login to account
-          operationId: loginAccount
-          requestBody:
-              required: true
-              content:
-                application/json:
-                    schema:
-                      $ref: '#/components/schemas/AccountLoginRequest'
-          responses:
-              '200':
-                description: Success
-                content:
-                    application/json:
-                      schema:
-                          $ref: '#/components/schemas/AccountAuthResponseSuccess'
-              '400':
-                description: Bad request
-                content:
-                  application/json:
-                    schema:
-                      $ref: '#/components/schemas/AccountAuthBadRequest'
-              '401':
-                description: Unauthorized
-                content:
-                  application/json:
-                    schema:
-                      $ref: '#/components/schemas/AccountAuthUnauthorized'
-
-    /account/info/public:
-      get:
-        tags:
-          - Account
-        summary: Get account public information
-        operationId: getAccountPublicInfo
-        parameters:
-          - name: nickname
-            in: query
-            description: Account nickname
-            required: true
+  /account/register:
+    post:
+      tags:
+        - Account
+      summary: Register new account
+      operationId: registerAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
             schema:
-              type: string
-        responses:
-          '200':
-            description: Success
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/AccountInfoPublicResponseSuccess'
-          '404':
-            description: Not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/AccountInfoNotFound'
-    /account/info/private:
-      get:
-        tags:
-          - Account
-        summary: Get account private information
-        operationId: getAccountPrivateInfo
-        parameters:
-          - name: token
-            in: query
-            description: Account token
-            required: true
-            schema:
-              type: string
-        responses:
-          '200':
-            description: Success
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/AccountInfoPrivateResponseSuccess'
-          '404':
-            description: Not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/AccountInfoNotFound'
+              $ref: '#/components/schemas/RegisterAccountRequest'
+      responses:
+        '200':
+          description: Account registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterAccountOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterAccountBadRequest'
+        '409':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterAccountConflict'
 
-    /account/info/media/{type}:
-      get:
-        tags:
-          - Account
-        summary: Get account media
-        operationId: getMedia
-        parameters:
-          - name: nickname
-            in: query
-            description: Account nickname
-            required: true
+  /account/login:
+    post:
+      tags:
+        - Account
+      summary: Login to account
+      operationId: loginAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
             schema:
-              type: string
-          - name: type
-            in: path
-            description: Media type
-            required: true
-            schema:
-              type: string
-        responses:
-          '200':
-            description: Success
+              $ref: '#/components/schemas/LoginAccountRequest'
+      responses:
+        '200':
+          description: Account logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginAccountOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginAccountBadRequest'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginAccountUnauthorized'
+
+  /account/info/public:
+    get:
+      tags:
+        - Account
+      summary: Get public account info
+      operationId: getPublicAccountInfo
+      parameters:
+        - name: nickname
+          in: query
+          description: Account nickname
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+            description: Account info received successfully
             content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    avatar:
-                      type: string
-                      format: binary
-
-    /account/delete:
-        delete:
-            tags:
-              - Account
-            summary: Delete account
-            operationId: deleteAccount
-            parameters:
-              - name: login
-                in: query
-                description: Account login (email or username)
-                required: true
-                schema:
-                  type: string
-              - name: password
-                in: query
-                description: Account password
-                required: true
-                schema:
-                  type: string
-                  format: password
-            responses:
-                '200':
-                    description: Success
-                    content:
-                      application/json:
-                        schema:
-                          type: object
-                          properties:
-                            message:
-                              type: string
-                              example: Account deleted
-
-    /account/update/nickname:
-        post:
-            tags:
-              - Account
-            summary: Update account nickname
-            operationId: updateNickname
-            requestBody:
-              required: true
-              content:
                 application/json:
                   schema:
-                    type: object
-                    properties:
-                      token:
-                        type: string
-                      new_nickname:
-                        type: string
-            responses:
-                '200':
-                    description: Success
-                    content:
-                      application/json:
-                        schema:
-                          type: object
-                          properties:
-                            message:
-                              type: string
-                              example: Nickname changed
-
-    /account/update/password:
-        post:
-            tags:
-              - Account
-            summary: Update account password
-            operationId: updatePassword
-            requestBody:
-              required: true
-              content:
+                      $ref: '#/components/schemas/GetPublicAccountInfoOK'
+        '400':
+            description: Invalid request
+            content:
                 application/json:
                   schema:
-                    type: object
-                    properties:
-                      nickname:
-                        type: string
-                      current_password:
-                        type: string
-                        format: password
-                      new_password:
-                        type: string
-                        format: password
-            responses:
-                '200':
-                    description: Success
-                    content:
-                      application/json:
-                        schema:
-                          type: object
-                          properties:
-                            message:
-                              type: string
-                              example: Password changed
-    /account/update/media/{type}:
-      post:
+                      $ref: '#/components/schemas/GetPublicAccountInfoBadRequest'
+        '404':
+            description: Account not found
+            content:
+                application/json:
+                  schema:
+                      $ref: '#/components/schemas/GetPublicAccountInfoNotFound'
+
+  /account/info/private:
+    get:
+      tags:
+        - Account
+      summary: Get private account info
+      operationId: getPrivateAccountInfo
+      parameters:
+        - name: token
+          in: query
+          description: Account token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account info received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPrivateAccountInfoOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPrivateAccountInfoBadRequest'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPrivateAccountInfoNotFound'
+
+  /account/info/media/{type}:
+    get:
+      tags:
+        - Account
+      summary: Get account media
+      operationId: getAccountMedia
+      parameters:
+        - name: nickname
+          in: query
+          description: Account nickname
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: path
+          description: Media type - can be "avatar" or "banner"
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account media received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAccountMediaOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAccountMediaBadRequest'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAccountMediaNotFound'
+
+  /account/delete:
+    delete:
         tags:
-          - Account
-        summary: Update account media
-        operationId: updateMedia
-        parameters:
-          - name: token
-            in: query
-            description: Account token
-            required: true
-            schema:
-              type: string
-          - name: type
-            in: path
-            description: Media type
-            required: true
-            schema:
-              type: string
+            - Account
+        summary: Delete account
+        operationId: deleteAccount
         requestBody:
           required: true
           content:
-            multipart/form-data:
-              schema:
-                type: object
-                properties:
-                  media:
-                    type: string
-                    format: binary
+            application/json:
+                schema:
+                  $ref: '#/components/schemas/DeleteAccountRequest'
         responses:
             '200':
-                description: Success
-                content:
-                  application/json:
-                    schema:
-                      type: object
-                      properties:
-                        message:
-                          type: string
-                          example: Avatar changed
-
-    /account/update/info:
-        post:
-            tags:
-              - Account
-            summary: Update account information
-            operationId: UpdateInfo
-            requestBody:
+              description: Account deleted successfully
               content:
                 application/json:
                   schema:
-                    type: object
-                    properties:
-                      token:
-                        type: string
-                      visible_name:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          surname:
-                            type: string
-                      music_preferences:
-                        type: array
-                        items:
-                          type: string
-                      other_preferences:
-                        type: array
-                        items:
-                          type: string
-                      about:
-                        type: string
-            responses:
-                '200':
-                    description: Success
-                    content:
-                      application/json:
-                        schema:
-                          type: object
-                          properties:
-                            message:
-                              type: string
-                              example: Account updated
+                      $ref: '#/components/schemas/DeleteAccountOK'
+            '400':
+              description: Invalid request
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/DeleteAccountBadRequest'
+            '401':
+              description: Invalid credentials
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/DeleteAccountUnauthorized'
 
-    /music/yandex/track/get_and_save_current:
-        get:
-            tags:
-              - Music
-            summary: Get current track ID from Yandex Music and save it to Rythmap account
-            operationId: getYandexCurrentTrack
-            parameters:
-              - name: yandexToken
-                in: query
-                description: Yandex Music account token
-                required: true
-                schema:
-                  type: string
-              - name: rythmapToken
-                in: query
-                description: Rythmap account token
-                required: true
-                schema:
-                  type: string
-            responses:
-                '200':
-                    description: Success
-                    content:
-                      application/json:
-                        schema:
-                          type: object
+  /account/update/info:
+    post:
+        tags:
+            - Account
+        summary: Update account info
+        operationId: updateAccountInfo
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountInfoRequest'
+        responses:
+            '200':
+              description: Account info updated successfully
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/UpdateAccountInfoOK'
+            '400':
+              description: Invalid request
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/UpdateAccountInfoBadRequest'
 
-    /music/yandex/track/info:
-        get:
-            tags:
-              - Music
-            summary: Get track information from Yandex Music
-            operationId: getYandexTrackInfo
-            parameters:
-              - name: trackID
-                in: query
-                description: Yandex Music track ID
-                required: true
-                schema:
+  /account/update/nickname:
+    post:
+      tags:
+        - Account
+      summary: Update account nickname
+      operationId: updateAccountNickname
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountNicknameRequest'
+      responses:
+        '200':
+          description: Account nickname updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountNicknameOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountNicknameBadRequest'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountNicknameNotFound'
+        '409':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountNicknameConflict'
+
+  /account/update/password:
+    post:
+      tags:
+        - Account
+      summary: Update account password
+      operationId: updateAccountPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountPasswordRequest'
+      responses:
+        '200':
+          description: Account password updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountPasswordOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountPasswordBadRequest'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountPasswordUnauthorized'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountPasswordNotFound'
+        '409':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountPasswordConflict'
+
+  /account/update/media/{type}:
+    post:
+      tags:
+        - Account
+      summary: Update account media
+      operationId: updateAccountMedia
+      parameters:
+        - name: token
+          in: query
+          description: Account token
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: path
+          description: Media type - can be "avatar" or "banner"
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                media:
                   type: string
-            responses:
-                '200':
-                    description: Success
-                    content:
-                      application/json:
-                        schema:
-                          type: object
+                  format: binary
+      responses:
+        '200':
+          description: Account media updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountMediaOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountMediaBadRequest'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAccountMediaNotFound'
+
+  /friends/request/send:
+    post:
+      tags:
+        - Friends system
+      summary: Send friend request
+      operationId: sendFriendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendFriendRequest'
+      responses:
+        '200':
+          description: Friend request sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendFriendRequestOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendFriendRequestBadRequest'
+
+  /friends/request/accept:
+    post:
+      tags:
+        - Friends system
+      summary: Accept friend request
+      operationId: acceptFriendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptFriendRequest'
+      responses:
+        '200':
+          description: Friend request accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptFriendRequestOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptFriendRequestBadRequest'
+
+  /friends/request/decline:
+    post:
+      tags:
+        - Friends system
+      summary: Decline friend request
+      operationId: declineFriendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclineFriendRequest'
+      responses:
+        '200':
+          description: Friend request declined successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeclineFriendRequestOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeclineFriendRequestBadRequest'
+
+  /music/yandex/track/get_and_save_current:
+    get:
+      tags:
+        - Music
+      summary: Get and save current track from Yandex Music
+      operationId: getAndSaveCurrentTrack
+      parameters:
+        - name: rythmapToken
+          in: query
+          description: Rythmap account token
+          required: true
+          schema:
+            type: string
+        - name: yandexToken
+          in: query
+          description: Yandex account token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Track received and saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAndSaveCurrentTrackOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAndSaveCurrentTrackBadRequest'
+
+  /music/yandex/track/info:
+    get:
+      tags:
+        - Music
+      summary: Get track info from Yandex Music
+      operationId: getTrackInfo
+      parameters:
+        - name: trackID
+          in: query
+          description: Yandex track ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Track info received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTrackInfoOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTrackInfoBadRequest'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTrackInfoInternalServerError'
 
 components:
-    schemas:
-      AccountRegisterRequest:
-          required:
-            - nickname
-            - password
-            - email
+  schemas:
+    RegisterAccountRequest:
+      required:
+        - nickname
+        - email
+        - password
+      type: object
+      properties:
+        nickname:
+          type: string
+        visible_name:
           type: object
           properties:
-              nickname:
-                type: string
-              visible_name:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  surname:
-                    type: string
-              password:
-                type: string
-                format: password
-              email:
-                type: string
-                format: email
-              music_preferences:
-                type: array
-                items:
-                  type: string
-              other_preferences:
-                type: array
-                items:
-                  type: string
-              about:
-                type: string
-      AccountLoginRequest:
-          type: object
-          properties:
-              login:
-                type: string
-              password:
-                type: string
-                format: password
+            name:
+              type: string
+            surname:
+              type: string
+        password:
+          type: string
+          format: password
+        email:
+          type: string
+          format: email
+        music_preferences:
+          type: array
+          items:
+            type: string
+        other_preferences:
+          type: array
+          items:
+            type: string
+        about:
+          type: string
 
-      AccountAuthResponseSuccess:
-        type: object
-        properties:
-          token:
-            type: string
-          token_type:
-            type: string
-            example: Bearer
-      AccountAuthBadRequest:
-        type: object
-        properties:
-          message:
-            type: string
-            example: Empty fields
-      AccountAuthUnauthorized:
-        type: object
-        properties:
-          message:
-            type: string
-            example: Invalid credentials
-      AccountAuthConflict:
-        type: object
-        properties:
-          message:
-            type: string
-            example: Account already exists
+    RegisterAccountOK:
+      type: object
+      properties:
+        token:
+          type: string
+        token_type:
+          type: string
+          example:
+            - bearer
 
-      AccountInfoPublicResponseSuccess:
+    RegisterAccountBadRequest:
+      type: string
+      example: Invalid request
+
+    RegisterAccountConflict:
+      type: string
+      example: Email or nickname already exists
+
+    LoginAccountRequest:
+      required:
+        - login
+        - password
+      type: object
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+          format: password
+
+    LoginAccountOK:
+      type: object
+      properties:
+        token:
+          type: string
+        token_type:
+          type: string
+          example:
+            - bearer
+
+    LoginAccountBadRequest:
+      type: string
+      example: Invalid request
+
+    LoginAccountUnauthorized:
+      type: string
+      example: Invalid credentials
+
+    GetPublicAccountInfoOK:
+      type: object
+      properties:
+        accountID:
+          type: string
+        nickname:
+          type: string
+        visible_name:
           type: object
           properties:
-            account_id:
+            name:
               type: string
-            nickname:
+            surname:
               type: string
-            visible_name:
-              type: object
-              properties:
-                  name:
-                    type: string
-                  surname:
-                    type: string
-            music_preferences:
-                type: array
-                items:
-                    type: string
-            other_preferences:
-                type: array
-                items:
-                    type: string
-            about:
-              type: string
-            created_at:
-              type: string
-              format: date-time
-      AccountInfoPrivateResponseSuccess:
+        about:
+          type: string
+        music_preferences:
+          type: array
+          items:
+            type: string
+        other_preferences:
+          type: array
+          items:
+            type: string
+        last_tracks:
           type: object
           properties:
-            account_id:
+            yandex_track_id:
               type: string
-            token:
+            spotify_track_id:
               type: string
-            nickname:
-              type: string
-            visible_name:
-              type: object
-              properties:
-                  name:
-                    type: string
-                  surname:
-                    type: string
-            email:
-              type: string
-              format: email
-            music_preferences:
-                type: array
-                items:
-                    type: string
-            other_preferences:
-                type: array
-                items:
-                    type: string
-            about:
-              type: string
-            created_at:
-              type: string
-              format: date-time
-      AccountInfoNotFound:
+        friends:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+
+    GetPublicAccountInfoBadRequest:
+      type: string
+      example: Invalid request
+
+    GetPublicAccountInfoNotFound:
+      type: string
+      example: Account not found
+
+    GetPrivateAccountInfoOK:
+      type: object
+      properties:
+        accountID:
+          type: string
+        token:
+          type: string
+        nickname:
+          type: string
+        visible_name:
           type: object
           properties:
-            message:
+            name:
               type: string
-              example: Token or nickname not found
+            surname:
+              type: string
+        about:
+          type: string
+        email:
+          type: string
+          format: email
+        music_preferences:
+          type: array
+          items:
+            type: string
+        other_preferences:
+          type: array
+          items:
+            type: string
+        last_tracks:
+          type: object
+          properties:
+            yandex_track_id:
+              type: string
+            spotify_track_id:
+              type: string
+        friends:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+
+    GetPrivateAccountInfoBadRequest:
+      type: string
+      example: Invalid request
+
+    GetPrivateAccountInfoNotFound:
+      type: string
+      example: Token not found
+
+    GetAccountMediaOK:
+      type: object
+      properties:
+        media:
+          type: string
+          format: binary
+
+    GetAccountMediaBadRequest:
+      type: string
+      example: Invalid request
+
+    GetAccountMediaNotFound:
+      type: string
+      example: Account not found
+
+    DeleteAccountRequest:
+      required:
+        - login
+        - password
+      type: object
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+          format: password
+
+    DeleteAccountOK:
+      type: string
+      example: Account deleted
+
+    DeleteAccountBadRequest:
+      type: string
+      example: Invalid request
+
+    DeleteAccountUnauthorized:
+      type: string
+      example: Invalid credentials
+
+    UpdateAccountInfoRequest:
+      required:
+        - token
+      type: object
+      properties:
+        token:
+          type: string
+        visible_name:
+          type: object
+          properties:
+            name:
+              type: string
+            surname:
+              type: string
+        music_preferences:
+          type: array
+          items:
+            type: string
+        other_preferences:
+          type: array
+          items:
+            type: string
+        about:
+          type: string
+
+    UpdateAccountInfoOK:
+      type: string
+      example: Account info
+
+    UpdateAccountInfoBadRequest:
+      type: string
+      example: Invalid request
+
+    UpdateAccountNicknameRequest:
+      required:
+        - token
+        - new_nickname
+      type: object
+      properties:
+        token:
+          type: string
+        new_nickname:
+          type: string
+
+    UpdateAccountNicknameOK:
+      type: string
+      example: Nickname changed
+
+    UpdateAccountNicknameBadRequest:
+      type: string
+      example: Invalid request
+
+    UpdateAccountNicknameNotFound:
+      type: string
+      example: Token not found
+
+    UpdateAccountNicknameConflict:
+      type: string
+      example: Nickname already exists
+
+    UpdateAccountPasswordRequest:
+      required:
+        - nickname
+        - current_password
+        - new_password
+      type: object
+      properties:
+        nickname:
+          type: string
+        current_password:
+          type: string
+          format: password
+        new_password:
+          type: string
+          format: password
+
+    UpdateAccountPasswordOK:
+      type: string
+      example: Password changed
+
+    UpdateAccountPasswordBadRequest:
+      type: string
+      example: Invalid request
+
+    UpdateAccountPasswordUnauthorized:
+      type: string
+      example: Invalid credentials
+
+    UpdateAccountPasswordNotFound:
+      type: string
+      example: Account not found
+
+    UpdateAccountPasswordConflict:
+      type: string
+      example: Invalid parameters
+
+    UpdateAccountMediaOK:
+      type: string
+      example: Media updated
+
+    UpdateAccountMediaBadRequest:
+      type: string
+      example: Invalid request
+
+    UpdateAccountMediaNotFound:
+      type: string
+      example: Token not found
+
+    SendFriendRequest:
+      required:
+        - fromToken
+        - toNickname
+      type: object
+      properties:
+        fromToken:
+          type: string
+        toNickname:
+          type: string
+        message:
+          type: string
+
+    SendFriendRequestOK:
+      type: string
+      example: Friend request sent
+
+    SendFriendRequestBadRequest:
+      type: string
+      example: Invalid request
+
+    AcceptFriendRequest:
+      required:
+        - toToken
+        - fromNickname
+      properties:
+        toToken:
+          type: string
+        fromNickname:
+          type: string
+
+    AcceptFriendRequestOK:
+      type: string
+      example: Friend request accepted
+
+    AcceptFriendRequestBadRequest:
+      type: string
+      example: Invalid request
+
+    DeclineFriendRequest:
+        required:
+            - toToken
+            - fromNickname
+        properties:
+          toToken:
+            type: string
+          fromNickname:
+            type: string
+
+    DeclineFriendRequestOK:
+      type: string
+      example: Friend request declined
+
+    DeclineFriendRequestBadRequest:
+      type: string
+      example: Invalid request
+
+    GetAndSaveCurrentTrackOK:
+      type: string
+      example: 2281337420
+
+    GetAndSaveCurrentTrackBadRequest:
+      type: string
+      example: Error while getting track ID
+
+    GetTrackInfoOK:
+      type: object
+
+    GetTrackInfoBadRequest:
+      type: string
+      example: Invalid request
+
+    GetTrackInfoInternalServerError:
+      type: string
+      example: Internal server error

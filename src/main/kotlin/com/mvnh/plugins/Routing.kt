@@ -1,6 +1,7 @@
 package com.mvnh.plugins
 
 import com.mvnh.routes.accountRoutes
+import com.mvnh.routes.friendsRoutes
 import com.mvnh.routes.musicRoutes
 import io.ktor.server.application.*
 import io.ktor.server.plugins.swagger.*
@@ -21,6 +22,7 @@ fun Application.configureRouting() {
 
     routing {
         accountRoutes()
+        friendsRoutes()
         musicRoutes()
     }
 }
