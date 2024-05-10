@@ -10,8 +10,8 @@ import io.ktor.server.routing.*
 
 fun Application.configureRouting() {
     routing {
-        swaggerUI(path = "swagger", swaggerFile = "/home/Rythmap-server-ktor/swagger.yaml")
-        //swaggerUI(path = "swagger", swaggerFile = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\resources\\swagger.yaml")
+        //swaggerUI(path = "swagger", swaggerFile = "/home/Rythmap-server-ktor/swagger.yaml")
+        swaggerUI(path = "swagger", swaggerFile = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\resources\\swagger.yaml")
     }
     
     routing {

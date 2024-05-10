@@ -866,12 +866,12 @@ components:
 
     AcceptFriendRequest:
       required:
-        - toToken
-        - fromNickname
+        - toNickname
+        - fromToken
       properties:
-        toToken:
+        toNickname:
           type: string
-        fromNickname:
+        fromToken:
           type: string
 
     AcceptFriendRequestOK:
@@ -883,14 +883,14 @@ components:
       example: Invalid request
 
     DeclineFriendRequest:
-        required:
-            - toToken
-            - fromNickname
-        properties:
-          toToken:
-            type: string
-          fromNickname:
-            type: string
+      required:
+        - toNickname
+        - fromToken
+      properties:
+        toNickname:
+          type: string
+        fromToken:
+          type: string
 
     DeclineFriendRequestOK:
       type: string
