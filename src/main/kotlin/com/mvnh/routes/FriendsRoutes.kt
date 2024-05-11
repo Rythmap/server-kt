@@ -58,7 +58,46 @@ fun Route.friendsRoutes() {
             }
 
             post("/accept") {
-                TODO("Accept friend request")
+                val request = call.receive<AcceptFriendRequest>()
+
+                if (request.toNickname != null && request.fromToken != null) {
+                    val toDocument = accountsCollection.find(Document("nickname", request.toNickname)).first()
+                    val fromDocument = accountsCollection.find(Document("token", request.fromToken)).first()
+
+                    if (toDocument != null && fromDocument != null) {
+                        var toFriends = toDocument["friends"] as? MutableList<String>
+                        var fromFriends = fromDocument["friends"] as? MutableList<String>
+                        var fromFriendRequests = fromDocument["friend_requests"] as? MutableList<String>
+
+                        if (toFriends == null) { // если у to нет друзей, то создаем пустой список
+                            toFriends = mutableListOf<String>()
+                            accountsCollection.updateOne(Document("nickname", request.toNickname), Document("\$set", Document("friends", toFriends)))
+                        }
+                        if (fromFriends == null) { // если у from нет друзей, то создаем пустой список
+                            fromFriends = mutableListOf<String>()
+                            accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friends", fromFriends)))
+                        }
+                        if (fromFriendRequests == null) { // если у from нет запросов в друзья, то создаем пустой список
+                            fromFriendRequests = mutableListOf<String>()
+                            accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friend_requests", fromFriendRequests)))
+                        }
+
+                        if (fromFriendRequests.contains(toDocument["nickname"])) { // если у from есть запрос в друзья от to
+                            fromFriendRequests.remove(toDocument["nickname"])
+                            accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friend_requests", fromFriendRequests)))
+
+                            toFriends.add(fromDocument["nickname"] as String)
+                            fromFriends?.add(toDocument["nickname"] as String)
+
+                            accountsCollection.updateOne(Document("nickname", request.toNickname), Document("\$set", Document("friends", toFriends)))
+                            accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friends", fromFriends)))
+
+                            call.respond(HttpStatusCode.OK, "Friend request accepted")
+                        } else {
+                            call.respond(HttpStatusCode.BadRequest, "No friend request from this user")
+                        }
+                    }
+                }
             }
 
             post("/decline") {
