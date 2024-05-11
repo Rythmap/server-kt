@@ -8,13 +8,14 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import org.bson.Document
+import kotlin.String as String1
 
 @Serializable
-data class SendFriendRequest(val fromToken: String, val toNickname: String, val message: String? = null)
+data class SendFriendRequest(val fromToken: String1, val toNickname: String1, val message: String1? = null)
 @Serializable
-data class AcceptFriendRequest(val toNickname: String, val fromToken: String)
+data class AcceptFriendRequest(val toNickname: String1, val fromToken: String1)
 @Serializable
-data class DeclineFriendRequest(val toNickname: String, val fromToken: String)
+data class DeclineFriendRequest(val toNickname: String1, val fromToken: String1)
 
 fun Route.friendsRoutes() {
     val mongoDB = getMongoDatabase()
@@ -30,20 +31,20 @@ fun Route.friendsRoutes() {
                     val toDocument = accountsCollection.find(Document("nickname", request.toNickname)).first()
 
                     if (fromDocument != null && toDocument != null) {
-                        var fromFriends = fromDocument["friends"] as? MutableList<String>
-                        var toFriendRequests = toDocument["friend_requests"] as? MutableList<String>
+                        var fromFriends = fromDocument["friends"] as? MutableList<String1>
+                        var toFriendRequests = toDocument["friend_requests"] as? MutableList<String1>
 
-                        if (fromFriends == null) { // если у from нет друзей, то создаем пустой список
-                            fromFriends = mutableListOf<String>()
+                        if (fromFriends == null) {
+                            fromFriends = mutableListOf()
                             accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friends", fromFriends)))
                         }
-                        if (toFriendRequests == null) { // если у to нет запросов в друзья, то создаем пустой список
-                            toFriendRequests = mutableListOf<String>()
+                        if (toFriendRequests == null) {
+                            toFriendRequests = mutableListOf()
                             accountsCollection.updateOne(Document("nickname", request.toNickname), Document("\$set", Document("friend_requests", toFriendRequests)))
                         }
 
                         if (!fromFriends.contains(request.toNickname) && !toFriendRequests.contains(fromDocument["nickname"])) { // если у from нет в друзьях to И у to нет запроса от from
-                            toFriendRequests.add(fromDocument["nickname"] as String)
+                            toFriendRequests.add(fromDocument["nickname"] as String1)
                             accountsCollection.updateOne(Document("nickname", request.toNickname), Document("\$set", Document("friend_requests", toFriendRequests)))
                             call.respond(HttpStatusCode.OK, "Friend request sent")
                         } else {
@@ -65,29 +66,29 @@ fun Route.friendsRoutes() {
                     val fromDocument = accountsCollection.find(Document("token", request.fromToken)).first()
 
                     if (toDocument != null && fromDocument != null) {
-                        var toFriends = toDocument["friends"] as? MutableList<String>
-                        var fromFriends = fromDocument["friends"] as? MutableList<String>
-                        var fromFriendRequests = fromDocument["friend_requests"] as? MutableList<String>
+                        var toFriends = toDocument["friends"] as? MutableList<String1>
+                        var fromFriends = fromDocument["friends"] as? MutableList<String1>
+                        var fromFriendRequests = fromDocument["friend_requests"] as? MutableList<String1>
 
-                        if (toFriends == null) { // если у to нет друзей, то создаем пустой список
-                            toFriends = mutableListOf<String>()
+                        if (toFriends == null) {
+                            toFriends = mutableListOf()
                             accountsCollection.updateOne(Document("nickname", request.toNickname), Document("\$set", Document("friends", toFriends)))
                         }
-                        if (fromFriends == null) { // если у from нет друзей, то создаем пустой список
-                            fromFriends = mutableListOf<String>()
+                        if (fromFriends == null) {
+                            fromFriends = mutableListOf()
                             accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friends", fromFriends)))
                         }
-                        if (fromFriendRequests == null) { // если у from нет запросов в друзья, то создаем пустой список
-                            fromFriendRequests = mutableListOf<String>()
+                        if (fromFriendRequests == null) {
+                            fromFriendRequests = mutableListOf()
                             accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friend_requests", fromFriendRequests)))
                         }
 
-                        if (fromFriendRequests.contains(toDocument["nickname"])) { // если у from есть запрос в друзья от to
+                        if (fromFriendRequests.contains(toDocument["nickname"])) {
                             fromFriendRequests.remove(toDocument["nickname"])
                             accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friend_requests", fromFriendRequests)))
 
-                            toFriends.add(fromDocument["nickname"] as String)
-                            fromFriends?.add(toDocument["nickname"] as String)
+                            toFriends.add(fromDocument["nickname"] as String1)
+                            fromFriends?.add(toDocument["nickname"] as String1)
 
                             accountsCollection.updateOne(Document("nickname", request.toNickname), Document("\$set", Document("friends", toFriends)))
                             accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friends", fromFriends)))
@@ -101,7 +102,44 @@ fun Route.friendsRoutes() {
             }
 
             post("/decline") {
-                TODO("Decline friend request")
+                val request = call.receive<DeclineFriendRequest>()
+
+                if (request.toNickname != null && request.fromToken != null) {
+                    val toDocument = accountsCollection.find(Document("nickname", request.toNickname)).first()
+                    val fromDocument = accountsCollection.find(Document("token", request.fromToken)).first()
+
+                    if (toDocument != null && fromDocument != null) {
+                        var fromFriendRequests = fromDocument["friend_requests"] as? MutableList<String1>
+
+                        if (fromFriendRequests == null) {
+                            fromFriendRequests = mutableListOf()
+                            accountsCollection.updateOne(
+                                Document("token", request.fromToken),
+                                Document("\$set", Document("friend_requests", fromFriendRequests))
+                            )
+                        }
+
+                        if (fromFriendRequests?.contains(toDocument["nickname"]) == true) {
+                            fromFriendRequests?.remove(toDocument["nickname"])
+                            accountsCollection.updateOne(
+                                Document("token", request.fromToken),
+                                Document("\$set", Document("friend_requests", fromFriendRequests))
+                            )
+
+                            call.respond(HttpStatusCode.OK, "Friend request declined")
+                        } else {
+                            call.respond(HttpStatusCode.BadRequest, "No friend request from this user")
+                        }
+                    }
+                }
+            }
+
+            post("/cancel") {
+                TODO("Not yet implemented")
+            }
+
+            post("/remove") {
+                TODO("Not yet implemented")
             }
         }
     }
