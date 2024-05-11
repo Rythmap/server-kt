@@ -448,6 +448,58 @@ paths:
               schema:
                 $ref: '#/components/schemas/DeclineFriendRequestBadRequest'
 
+  /friends/request/cancel:
+    post:
+      tags:
+        - Friends system
+      summary: Cancel friend request
+      operationId: cancelFriendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclineFriendRequest'
+      responses:
+        '200':
+          description: Friend request canceled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeclineFriendRequestOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeclineFriendRequestBadRequest'
+
+  /friends/remove:
+    post:
+      tags:
+        - Friends system
+      summary: Remove friend
+      operationId: removeFriend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclineFriendRequest'
+      responses:
+        '200':
+          description: Friend removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeclineFriendRequestOK'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeclineFriendRequestBadRequest'
+
   /music/yandex/track/get_and_save_current:
     get:
       tags:
