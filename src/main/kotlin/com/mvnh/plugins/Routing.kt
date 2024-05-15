@@ -7,11 +7,15 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.swagger.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.io.File
 
 fun Application.configureRouting() {
     routing {
-        //swaggerUI(path = "swagger", swaggerFile = "/home/Rythmap-server-ktor/swagger.yaml")
-        swaggerUI(path = "swagger", swaggerFile = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\resources\\swagger.yaml")
+        if (File("src/main/resources/swagger.yaml").exists()) {
+            swaggerUI(path = "swagger", swaggerFile = "src/main/resources/swagger.yaml")
+        } else {
+            swaggerUI(path = "swagger", swaggerFile = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\resources\\swagger.yaml")
+        }
     }
     
     routing {

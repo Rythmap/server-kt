@@ -187,12 +187,19 @@ paths:
             - Account
         summary: Delete account
         operationId: deleteAccount
-        requestBody:
-          required: true
-          content:
-            application/json:
-                schema:
-                  $ref: '#/components/schemas/DeleteAccountRequest'
+        parameters:
+          - name: login
+            in: query
+            description: Account login
+            required: true
+            schema:
+              type: string
+          - name: password
+            in: query
+            description: Account password
+            required: true
+            schema:
+              type: string
         responses:
             '200':
               description: Account deleted successfully

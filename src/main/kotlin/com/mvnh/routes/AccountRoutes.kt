@@ -14,7 +14,9 @@ import org.bson.Document
 import java.io.File
 
 @Serializable
-data class AccountAuthResponse(val token: String, @SerialName("token_type") val tokenType: String = "bearer")
+data class AccountAuthResponse(@SerialName("account_id") val accountID: String,
+                               val token: String,
+                               @SerialName("token_type") val tokenType: String = "bearer")
 
 @Serializable
 data class AccountInfoPrivateResponse(
@@ -76,7 +78,7 @@ fun Route.accountRoutes() {
                         val document = createAccountDocument(account)
 
                         accountsCollection.insertOne(document)
-                        call.respond(HttpStatusCode.OK, AccountAuthResponse(document["token"].toString())) // 200
+                        call.respond(HttpStatusCode.OK, AccountAuthResponse(document["account_id"].toString(), document["token"].toString())) // 200
                     }
                 }
             }
@@ -99,7 +101,7 @@ fun Route.accountRoutes() {
                         )
                     ).first()
 
-                    call.respond(HttpStatusCode.OK, AccountAuthResponse(document?.get("token").toString())) // 200
+                    call.respond(HttpStatusCode.OK, AccountAuthResponse(document?.get("account_id").toString(), document?.get("token").toString())) // 200
                 }
             }
         }

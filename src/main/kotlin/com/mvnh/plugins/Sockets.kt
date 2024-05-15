@@ -16,6 +16,5 @@ fun Application.configureSockets() {
 
     routing {
         mapSocket()
-
     }
 }
