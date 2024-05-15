@@ -194,8 +194,14 @@ fun Route.accountRoutes() {
                         if (call.parameters["type"] == "avatar") {
                             val avatar = document["avatar"] as String?
                             if (avatar != null) {
-                                //val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$avatar.jpeg")
-                                val file = File("/home/Rythmap-server-ktor/media/avatars/$avatar.jpeg")
+                                val filePath: String
+                                if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$avatar.jpeg").exists()) {
+                                    filePath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$avatar.jpeg"
+                                } else {
+                                    filePath = "/home/Rythmap-server-ktor/media/avatars/$avatar.jpeg"
+                                }
+
+                                val file = File(filePath)
                                 if (file.exists()) {
                                     call.respondFile(file)
                                 } else {
@@ -207,8 +213,14 @@ fun Route.accountRoutes() {
                         } else if (call.parameters["type"] == "banner") {
                             val banner = document["banner"] as String?
                             if (banner != null) {
-                                //val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$banner.jpeg")
-                                val file = File("/home/Rythmap-server-ktor/media/banners/$banner.jpeg")
+                                val filePath: String
+                                if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$banner.jpeg").exists()) {
+                                    filePath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$banner.jpeg"
+                                } else {
+                                    filePath = "/home/Rythmap-server-ktor/media/banners/$banner.jpeg"
+                                }
+
+                                val file = File(filePath)
                                 if (file.exists()) {
                                     call.respondFile(file)
                                 } else {
@@ -363,8 +375,14 @@ fun Route.accountRoutes() {
                         } else { // need to check if file is not too big but not sure how
                             val fileName = "$nickname.jpeg"
                             if (call.parameters["type"] == "avatar") {
-                                //val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$fileName")
-                                val file = File("/home/Rythmap-server-ktor/media/avatars/$fileName")
+                                val filePath: String
+                                if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$fileName").exists()) {
+                                    filePath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$fileName"
+                                } else {
+                                    filePath = "/home/Rythmap-server-ktor/media/avatars/$fileName"
+                                }
+
+                                val file = File(filePath)
                                 part.streamProvider().use { its ->
                                     file.outputStream().buffered().use {
                                         its.copyTo(it)
@@ -377,8 +395,14 @@ fun Route.accountRoutes() {
                                 )
                                 call.respond(HttpStatusCode.OK, "Avatar updated")
                             } else if (call.parameters["type"] == "banner") {
-                                //val file = File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$fileName")
-                                val file = File("/home/Rythmap-server-ktor/media/banners/$fileName")
+                                val filePath: String
+                                if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$fileName").exists()) {
+                                    filePath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$fileName"
+                                } else {
+                                    filePath = "/home/Rythmap-server-ktor/media/banners/$fileName"
+                                }
+
+                                val file = File(filePath)
                                 part.streamProvider().use { its ->
                                     file.outputStream().buffered().use {
                                         its.copyTo(it)
