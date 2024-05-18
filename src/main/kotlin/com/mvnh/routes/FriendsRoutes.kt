@@ -1,24 +1,44 @@
 package com.mvnh.routes
 
+import com.mvnh.entities.account.AccountLastTracks
+import com.mvnh.entities.account.AccountVisibleName
 import com.mvnh.utils.getMongoDatabase
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import org.bson.Document
 
 @Serializable
 data class SendFriendRequest(val fromToken: String, val toNickname: String, val message: String? = null)
+
 @Serializable
 data class AcceptFriendRequest(val toNickname: String, val fromToken: String)
+
 @Serializable
 data class DeclineFriendRequest(val toNickname: String, val fromToken: String)
+
 @Serializable
 data class CancelFriendRequest(val toNickname: String, val fromToken: String)
+
 @Serializable
 data class RemoveFromFriendsRequest(val toNickname: String, val fromToken: String)
+
+@Serializable
+data class SearchFriendsResponse(val nickname: SearchFriendsAccountInfo)
+
+@Serializable
+data class SearchFriendsAccountInfo(
+    @SerialName("account_id") val accountID: String,
+    @SerialName("visible_name") val visibleName: AccountVisibleName,
+    @SerialName("created_at") val createdAt: String
+)
 
 fun Route.friendsRoutes() {
     val mongoDB = getMongoDatabase()
@@ -39,16 +59,25 @@ fun Route.friendsRoutes() {
 
                         if (fromFriends == null) {
                             fromFriends = mutableListOf()
-                            accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friends", fromFriends)))
+                            accountsCollection.updateOne(
+                                Document("token", request.fromToken),
+                                Document("\$set", Document("friends", fromFriends))
+                            )
                         }
                         if (toFriendRequests == null) {
                             toFriendRequests = mutableListOf()
-                            accountsCollection.updateOne(Document("nickname", request.toNickname), Document("\$set", Document("friend_requests", toFriendRequests)))
+                            accountsCollection.updateOne(
+                                Document("nickname", request.toNickname),
+                                Document("\$set", Document("friend_requests", toFriendRequests))
+                            )
                         }
 
                         if (!fromFriends.contains(request.toNickname) && !toFriendRequests.contains(fromDocument["nickname"])) { // если у from нет в друзьях to И у to нет запроса от from
                             toFriendRequests.add(fromDocument["nickname"] as String)
-                            accountsCollection.updateOne(Document("nickname", request.toNickname), Document("\$set", Document("friend_requests", toFriendRequests)))
+                            accountsCollection.updateOne(
+                                Document("nickname", request.toNickname),
+                                Document("\$set", Document("friend_requests", toFriendRequests))
+                            )
                             call.respond(HttpStatusCode.OK, "Friend request sent")
                         } else {
                             call.respond(HttpStatusCode.BadRequest, "Friend request already sent")
@@ -75,26 +104,44 @@ fun Route.friendsRoutes() {
 
                         if (toFriends == null) {
                             toFriends = mutableListOf()
-                            accountsCollection.updateOne(Document("nickname", request.toNickname), Document("\$set", Document("friends", toFriends)))
+                            accountsCollection.updateOne(
+                                Document("nickname", request.toNickname),
+                                Document("\$set", Document("friends", toFriends))
+                            )
                         }
                         if (fromFriends == null) {
                             fromFriends = mutableListOf()
-                            accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friends", fromFriends)))
+                            accountsCollection.updateOne(
+                                Document("token", request.fromToken),
+                                Document("\$set", Document("friends", fromFriends))
+                            )
                         }
                         if (fromFriendRequests == null) {
                             fromFriendRequests = mutableListOf()
-                            accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friend_requests", fromFriendRequests)))
+                            accountsCollection.updateOne(
+                                Document("token", request.fromToken),
+                                Document("\$set", Document("friend_requests", fromFriendRequests))
+                            )
                         }
 
                         if (fromFriendRequests.contains(toDocument["nickname"])) {
                             fromFriendRequests.remove(toDocument["nickname"])
-                            accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friend_requests", fromFriendRequests)))
+                            accountsCollection.updateOne(
+                                Document("token", request.fromToken),
+                                Document("\$set", Document("friend_requests", fromFriendRequests))
+                            )
 
                             toFriends.add(fromDocument["nickname"] as String)
                             fromFriends?.add(toDocument["nickname"] as String)
 
-                            accountsCollection.updateOne(Document("nickname", request.toNickname), Document("\$set", Document("friends", toFriends)))
-                            accountsCollection.updateOne(Document("token", request.fromToken), Document("\$set", Document("friends", fromFriends)))
+                            accountsCollection.updateOne(
+                                Document("nickname", request.toNickname),
+                                Document("\$set", Document("friends", toFriends))
+                            )
+                            accountsCollection.updateOne(
+                                Document("token", request.fromToken),
+                                Document("\$set", Document("friends", fromFriends))
+                            )
 
                             call.respond(HttpStatusCode.OK, "Friend request accepted")
                         } else {
@@ -217,5 +264,36 @@ fun Route.friendsRoutes() {
                 }
             }
         }
+
+        get("/search") {
+            val nickname = call.parameters["nickname"]
+
+            if (nickname != null) {
+                val foundDocuments = accountsCollection.find(Document("nickname", Document("\$regex", nickname)))
+
+                val foundNicknamesInfo = mutableMapOf<String, SearchFriendsAccountInfo>()
+                for (document in foundDocuments) {
+                    foundNicknamesInfo[document["nickname"] as String] = documentToAccountInfo(document)
+                }
+
+                call.respond(HttpStatusCode.OK, Json.encodeToJsonElement(foundNicknamesInfo))
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "Missing query parameter")
+            }
+        }
     }
+}
+
+fun documentToAccountInfo(document: Document): SearchFriendsAccountInfo {
+    val visibleNameDocument = document["visible_name"] as Document?
+    val lastTracksDocument = document["last_tracks"] as Document?
+
+    return SearchFriendsAccountInfo(
+        document["account_id"] as String,
+        AccountVisibleName(
+            visibleNameDocument?.get("name") as String?,
+            visibleNameDocument?.get("surname") as String?
+        ),
+        document["created_at"].toString()
+    )
 }
