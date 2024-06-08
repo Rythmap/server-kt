@@ -286,7 +286,6 @@ fun Route.friendsRoutes() {
 
 fun documentToAccountInfo(document: Document): SearchFriendsAccountInfo {
     val visibleNameDocument = document["visible_name"] as Document?
-    val lastTracksDocument = document["last_tracks"] as Document?
 
     return SearchFriendsAccountInfo(
         document["account_id"] as String,

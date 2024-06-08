@@ -134,6 +134,7 @@ fun Route.accountRoutes() {
                                     yandexTrackID = lastTracksDocument?.get("yandex_track_id") as String?,
                                     spotifyTrackID = lastTracksDocument?.get("spotify_track_id") as String?
                                 ),
+                                friends = document["friends"] as List<String>?,
                                 about = document["about"] as String?,
                                 createdAt = document["created_at"].toString()
                             )
@@ -170,6 +171,7 @@ fun Route.accountRoutes() {
                                     yandexTrackID = lastTracksDocument?.get("yandex_track_id") as String?,
                                     spotifyTrackID = lastTracksDocument?.get("spotify_track_id") as String?
                                 ),
+                                friends = document["friends"] as List<String>?,
                                 about = document["about"] as String?,
                                 email = document["email"] as String,
                                 createdAt = document["created_at"].toString()
