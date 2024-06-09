@@ -98,6 +98,12 @@ fun Route.mapSocket() {
                     it.location.lat, it.location.lng,
                     receivedUser.location.lat, receivedUser.location.lng
                 ) < 500
+            }.map {
+                User(nickname = it.nickname,
+                    location = it.location,
+                    status = it.status,
+                    token = ""
+                )
             }
 
             val response = Json.encodeToString(nearbyUsers)
