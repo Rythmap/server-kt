@@ -5,13 +5,29 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.bson.Document
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+
+@Serializable
+data class TrackInfo(
+    @SerialName("track_id") val trackId: Int,
+    val title: String,
+    val artist: String,
+    val img: String,
+    val duration: Int,
+    val minutes: Int,
+    val seconds: Int,
+    val album: Int,
+    @SerialName("download_link") val downloadLink: String
+)
 
 fun Route.musicRoutes() {
     val mongoDB = getMongoDatabase()
@@ -46,28 +62,27 @@ fun Route.musicRoutes() {
                         val output = outputReader.readText()
                         val error = errorReader.readText()
 
-                        if (output != null) {
-                            call.application.log.info(output)
-                            val jsonOutput = Json.parseToJsonElement(output).jsonObject
+                        if (output.isNotEmpty()) {
+                            val jsonOutput = Json.decodeFromString<TrackInfo>(output)
 
                             val document = accountsCollection.find(Document("token", rythmapToken)).first()
                             if (document != null) {
-                                val trackID = jsonOutput["id"]?.jsonPrimitive?.content
-                                if (trackID != null) {
-                                    accountsCollection.updateOne(
-                                        Document("token", rythmapToken),
-                                        Document("\$set", Document("last_tracks.yandex_track_id", trackID))
-                                    )
-                                    call.respond(HttpStatusCode.OK, trackID)
-                                } else {
-                                    call.respond(HttpStatusCode.BadRequest, "Error while getting track ID")
-                                }
+                                accountsCollection.updateOne(
+                                    Document("token", rythmapToken),
+                                    Document("\$set", Document("last_tracks.yandex_track",
+                                        Document.parse(
+                                            Json.encodeToJsonElement(jsonOutput).toString()
+                                        )
+                                    ))
+                                )
+                                call.respond(HttpStatusCode.OK, jsonOutput)
                             } else {
                                 call.respond(HttpStatusCode.BadRequest, "Output is not null but token is invalid")
                             }
-                        }
-                        if (error != null) {
-                            call.application.log.error(error)
+                        } else if (error.isNotEmpty()) {
+                            call.respond(HttpStatusCode.InternalServerError, error)
+                        } else {
+                            call.respond(HttpStatusCode.InternalServerError, "Unknown error")
                         }
                     }
                 }

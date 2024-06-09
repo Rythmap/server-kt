@@ -131,8 +131,8 @@ fun Route.accountRoutes() {
                                 musicPreferences = document["music_preferences"] as List<String>?,
                                 otherPreferences = document["other_preferences"] as List<String>?,
                                 lastTracks = AccountLastTracks(
-                                    yandexTrackID = lastTracksDocument?.get("yandex_track_id") as String?,
-                                    spotifyTrackID = lastTracksDocument?.get("spotify_track_id") as String?
+                                    yandexTrack = lastTracksDocument?.get("yandex_track") as String?,
+                                    spotifyTrack = lastTracksDocument?.get("spotify_track") as String?
                                 ),
                                 friends = document["friends"] as List<String>?,
                                 about = document["about"] as String?,
@@ -168,8 +168,8 @@ fun Route.accountRoutes() {
                                 musicPreferences = document["music_preferences"] as List<String>?,
                                 otherPreferences = document["other_preferences"] as List<String>?,
                                 lastTracks = AccountLastTracks(
-                                    yandexTrackID = lastTracksDocument?.get("yandex_track_id") as String?,
-                                    spotifyTrackID = lastTracksDocument?.get("spotify_track_id") as String?
+                                    yandexTrack = lastTracksDocument?.get("yandex_track_id") as String?,
+                                    spotifyTrack = lastTracksDocument?.get("spotify_track_id") as String?
                                 ),
                                 friends = document["friends"] as List<String>?,
                                 about = document["about"] as String?,
@@ -196,11 +196,10 @@ fun Route.accountRoutes() {
                         if (call.parameters["type"] == "avatar") {
                             val avatar = document["avatar"] as String?
                             if (avatar != null) {
-                                val filePath: String
-                                if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$avatar.jpeg").exists()) {
-                                    filePath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$avatar.jpeg"
+                                val filePath = if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$avatar.jpeg").exists()) {
+                                    "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$avatar.jpeg"
                                 } else {
-                                    filePath = "/home/Rythmap-server-ktor/media/avatars/$avatar.jpeg"
+                                    "/home/Rythmap-server-ktor/media/avatars/$avatar.jpeg"
                                 }
 
                                 val file = File(filePath)
@@ -215,11 +214,10 @@ fun Route.accountRoutes() {
                         } else if (call.parameters["type"] == "banner") {
                             val banner = document["banner"] as String?
                             if (banner != null) {
-                                val filePath: String
-                                if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$banner.jpeg").exists()) {
-                                    filePath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$banner.jpeg"
+                                val filePath = if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$banner.jpeg").exists()) {
+                                    "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$banner.jpeg"
                                 } else {
-                                    filePath = "/home/Rythmap-server-ktor/media/banners/$banner.jpeg"
+                                    "/home/Rythmap-server-ktor/media/banners/$banner.jpeg"
                                 }
 
                                 val file = File(filePath)

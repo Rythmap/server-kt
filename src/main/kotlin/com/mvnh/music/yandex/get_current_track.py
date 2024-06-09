@@ -1,9 +1,10 @@
 # import yandex_music
 import argparse
 import sys
+import io
 import asyncio
 import requests
-# import json
+import json
 
 async def get_current_track(token: str):
     # if yandex_token:
@@ -27,10 +28,11 @@ async def get_current_track(token: str):
     #         sys.exit("No current tracks")
     # else:
     #     sys.exit("Yandex Music token not provided")
+
     if token:
         request = requests.get("https://api.mipoh.ru/get_current_track_beta", params={"token": token})
         if request.status_code == 200:
-            print(request.json())
+            print(json.dumps(request.json()))
         else:
             sys.exit(f"Failed to fetch track: {request.text}")
     else:
