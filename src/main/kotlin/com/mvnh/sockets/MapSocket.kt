@@ -1,18 +1,25 @@
 package com.mvnh.sockets
 
+import com.mvnh.utils.getMongoDatabase
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.bson.Document
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
 @Serializable
-data class User(val nickname: String, var location: Location, var status: String, var command: String? = null)
+data class User(val nickname: String,
+                var location: Location,
+                var status: String,
+                val token: String,
+                var command: String? = null
+)
 @Serializable
 data class Location(val lat: Double, val lng: Double)
 
@@ -43,6 +50,9 @@ fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): D
 }
 
 fun Route.mapSocket() {
+    val mongoDB = getMongoDatabase()
+    val accountsCollection = mongoDB.getCollection("accounts")
+
     webSocket("/map") {
         sessions.add(this)
         val nickname = call.parameters["nickname"]
@@ -58,8 +68,14 @@ fun Route.mapSocket() {
             frame as? Frame.Text ?: continue
             val receivedText = frame.readText()
             val receivedUser = Json.decodeFromString<User>(receivedText)
-            val existingUser = users.find { it.nickname == receivedUser.nickname }
 
+            val document = accountsCollection.find(Document("token", receivedUser.token)).first()
+            if (document["nickname"] != receivedUser.nickname || document == null) {
+                close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Invalid token"))
+                break
+            }
+
+            val existingUser = users.find { it.nickname == receivedUser.nickname }
             if (existingUser != null) {
                 existingUser.location = receivedUser.location
                 existingUser.status = receivedUser.status
@@ -73,7 +89,7 @@ fun Route.mapSocket() {
                     user.status = "offline"
                     user.command = null
                 }
-                break
+                close(CloseReason(CloseReason.Codes.NORMAL, "User has gone offline"))
             }
 
             hasSentLocation[this] = true
