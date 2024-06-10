@@ -1,6 +1,7 @@
 package com.mvnh.routes
 
 import com.mvnh.entities.account.*
+import com.mvnh.entities.music.yandex.YandexTrack
 import com.mvnh.utils.*
 import io.ktor.http.*
 import io.ktor.http.content.*
@@ -8,43 +9,8 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import org.bson.Document
 import java.io.File
-
-@Serializable
-data class AccountAuthResponse(@SerialName("account_id") val accountID: String,
-                               val token: String,
-                               @SerialName("token_type") val tokenType: String = "bearer")
-
-@Serializable
-data class AccountInfoPrivateResponse(
-    @SerialName("account_id") val accountID: String,
-    val token: String,
-    val nickname: String,
-    @SerialName("visible_name") val visibleName: AccountVisibleName?,
-    val about: String? = null,
-    val email: String,
-    @SerialName("music_preferences") val musicPreferences: List<String>? = null,
-    @SerialName("other_preferences") val otherPreferences: List<String>? = null,
-    @SerialName("last_tracks") val lastTracks: AccountLastTracks? = null,
-    @SerialName("friends") val friends: List<String>? = null,
-    @SerialName("created_at") val createdAt: String
-)
-
-@Serializable
-data class AccountInfoPublicResponse(
-    @SerialName("account_id") val accountID: String,
-    val nickname: String,
-    @SerialName("visible_name") val visibleName: AccountVisibleName?,
-    val about: String? = null,
-    @SerialName("music_preferences") val musicPreferences: List<String>? = null,
-    @SerialName("other_preferences") val otherPreferences: List<String>? = null,
-    @SerialName("last_tracks") val lastTracks: AccountLastTracks? = null,
-    @SerialName("friends") val friends: List<String>? = null,
-    @SerialName("created_at") val createdAt: String
-)
 
 fun Route.accountRoutes() {
     val mongoDB = getMongoDatabase()
@@ -120,8 +86,11 @@ fun Route.accountRoutes() {
                     } else {
                         val visibleNameDocument = document["visible_name"] as Document?
                         val lastTracksDocument = document["last_tracks"] as Document?
+                        val yandexLastTrackDocument = lastTracksDocument?.get("yandex_track") as Document?
+
+                        call.application.environment.log.info(document.toString())
                         call.respond(HttpStatusCode.OK,
-                            AccountInfoPublicResponse(
+                            AccountInfoPublic(
                                 accountID = document["account_id"] as String,
                                 nickname = document["nickname"] as String,
                                 visibleName = AccountVisibleName(
@@ -131,8 +100,17 @@ fun Route.accountRoutes() {
                                 musicPreferences = document["music_preferences"] as List<String>?,
                                 otherPreferences = document["other_preferences"] as List<String>?,
                                 lastTracks = AccountLastTracks(
-                                    yandexTrack = lastTracksDocument?.get("yandex_track") as String?,
-                                    spotifyTrack = lastTracksDocument?.get("spotify_track") as String?
+                                    yandexTrack = YandexTrack(
+                                        trackId = yandexLastTrackDocument?.get("track_id") as Int,
+                                        title = yandexLastTrackDocument["title"] as String,
+                                        artist = yandexLastTrackDocument["artist"] as String,
+                                        img = yandexLastTrackDocument["img"] as String,
+                                        duration = yandexLastTrackDocument["duration"] as Int,
+                                        minutes = yandexLastTrackDocument["minutes"] as Int,
+                                        seconds = yandexLastTrackDocument["seconds"] as Int,
+                                        album = yandexLastTrackDocument["album"] as Int,
+                                        downloadLink = yandexLastTrackDocument["download_link"] as String
+                                    )
                                 ),
                                 friends = document["friends"] as List<String>?,
                                 about = document["about"] as String?,
@@ -157,7 +135,7 @@ fun Route.accountRoutes() {
                         val visibleNameDocument = document["visible_name"] as Document?
                         val lastTracksDocument = document["last_tracks"] as Document?
                         call.respond(
-                            AccountInfoPrivateResponse(
+                            AccountInfoPrivate(
                                 accountID = document["account_id"] as String,
                                 token = document["token"] as String,
                                 nickname = document["nickname"] as String,
@@ -168,8 +146,17 @@ fun Route.accountRoutes() {
                                 musicPreferences = document["music_preferences"] as List<String>?,
                                 otherPreferences = document["other_preferences"] as List<String>?,
                                 lastTracks = AccountLastTracks(
-                                    yandexTrack = lastTracksDocument?.get("yandex_track_id") as String?,
-                                    spotifyTrack = lastTracksDocument?.get("spotify_track_id") as String?
+                                    yandexTrack = YandexTrack(
+                                        trackId = lastTracksDocument?.get("track_id") as Int,
+                                        title = lastTracksDocument["title"] as String,
+                                        artist = lastTracksDocument["artist"] as String,
+                                        img = lastTracksDocument["img"] as String,
+                                        duration = lastTracksDocument["duration"] as Int,
+                                        minutes = lastTracksDocument["minutes"] as Int,
+                                        seconds = lastTracksDocument["seconds"] as Int,
+                                        album = lastTracksDocument["album"] as Int,
+                                        downloadLink = lastTracksDocument["download_link"] as String
+                                    )
                                 ),
                                 friends = document["friends"] as List<String>?,
                                 about = document["about"] as String?,
