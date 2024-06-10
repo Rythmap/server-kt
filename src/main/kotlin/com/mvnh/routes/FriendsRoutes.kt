@@ -281,7 +281,7 @@ fun documentToAccountInfo(document: Document): AccountInfoPublic {
         visibleName = if (visibleNameDocument != null) {
             AccountVisibleName(
                 name = visibleNameDocument["name"] as String,
-                surname = visibleNameDocument["name"] as String
+                surname = visibleNameDocument["surname"] as String
             )
         } else {
             null
