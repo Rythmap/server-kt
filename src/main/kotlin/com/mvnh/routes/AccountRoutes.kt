@@ -11,10 +11,12 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.bson.Document
 import java.io.File
+import kotlin.random.Random
 
 fun Route.accountRoutes() {
     val mongoDB = getMongoDatabase()
     val accountsCollection = mongoDB.getCollection("accounts")
+    val isWindows = System.getProperty("os.name").lowercase().contains("windows")
 
     route("/account") {
         post("/register") {
@@ -97,6 +99,8 @@ fun Route.accountRoutes() {
                                     name = visibleNameDocument?.get("name") as String?,
                                     surname = visibleNameDocument?.get("surname") as String?
                                 ),
+                                avatar = document["avatar"] as String?,
+                                banner = document["banner"] as String?,
                                 musicPreferences = document["music_preferences"] as List<String>?,
                                 otherPreferences = document["other_preferences"] as List<String>?,
                                 lastTracks = AccountLastTracks(
@@ -145,6 +149,8 @@ fun Route.accountRoutes() {
                                     name = visibleNameDocument?.get("name") as String?,
                                     surname = visibleNameDocument?.get("surname") as String?
                                 ),
+                                avatar = document["avatar"] as String?,
+                                banner = document["banner"] as String?,
                                 musicPreferences = document["music_preferences"] as List<String>?,
                                 otherPreferences = document["other_preferences"] as List<String>?,
                                 lastTracks = AccountLastTracks(
@@ -171,21 +177,25 @@ fun Route.accountRoutes() {
             }
 
             get("/media/{type}") {
-                val nickname = call.parameters["nickname"]
+                val id = call.parameters["id"]
 
-                if (nickname == null) {
-                    call.respond(HttpStatusCode.BadRequest, "Nickname not provided")
+                if (id == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Media ID not provided")
                     return@get
                 } else {
-                    val document = accountsCollection.find(Document("nickname", nickname)).first()
+                    val document = if (call.parameters["type"] == "avatar") {
+                        accountsCollection.find(Document("avatar", id)).first()
+                    } else {
+                        accountsCollection.find(Document("banner", id)).first()
+                    }
                     if (document == null) {
-                        call.respond(HttpStatusCode.NotFound, "Account not found")
+                        call.respond(HttpStatusCode.NotFound, "Media not found")
                         return@get
                     } else {
                         if (call.parameters["type"] == "avatar") {
                             val avatar = document["avatar"] as String?
                             if (avatar != null) {
-                                val filePath = if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$avatar.jpeg").exists()) {
+                                val filePath = if (isWindows) {
                                     "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$avatar.jpeg"
                                 } else {
                                     "/home/Rythmap-server-ktor/media/avatars/$avatar.jpeg"
@@ -203,7 +213,7 @@ fun Route.accountRoutes() {
                         } else if (call.parameters["type"] == "banner") {
                             val banner = document["banner"] as String?
                             if (banner != null) {
-                                val filePath = if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$banner.jpeg").exists()) {
+                                val filePath = if (isWindows) {
                                     "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$banner.jpeg"
                                 } else {
                                     "/home/Rythmap-server-ktor/media/banners/$banner.jpeg"
@@ -352,8 +362,8 @@ fun Route.accountRoutes() {
                     call.respond(HttpStatusCode.BadRequest, "Token not provided")
                     return@post
                 } else {
-                    val nickname = accountsCollection.find(Document("token", token)).first()?.get("nickname") as String
-                    if (nickname == null) {
+                    val document = accountsCollection.find(Document("token", token)).first()
+                    if (document == null) {
                         call.respond(HttpStatusCode.NotFound, "Token not found")
                         return@post
                     } else {
@@ -362,13 +372,12 @@ fun Route.accountRoutes() {
                             call.respond(HttpStatusCode.BadRequest, "Invalid file type")
                             return@post
                         } else { // need to check if file is not too big but not sure how
-                            val fileName = "$nickname.jpeg"
+                            val fileName = "${Random.nextInt(0, 2147483646)}.jpeg"
                             if (call.parameters["type"] == "avatar") {
-                                val filePath: String
-                                if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$fileName").exists()) {
-                                    filePath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$fileName"
+                                val filePath: String = if (isWindows) {
+                                    "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\avatars\\$fileName"
                                 } else {
-                                    filePath = "/home/Rythmap-server-ktor/media/avatars/$fileName"
+                                    "/home/Rythmap-server-ktor/media/avatars/$fileName"
                                 }
 
                                 val file = File(filePath)
@@ -384,11 +393,10 @@ fun Route.accountRoutes() {
                                 )
                                 call.respond(HttpStatusCode.OK, "Avatar updated")
                             } else if (call.parameters["type"] == "banner") {
-                                val filePath: String
-                                if (File("C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$fileName").exists()) {
-                                    filePath = "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$fileName"
+                                val filePath = if (isWindows) {
+                                    "C:\\Users\\13mvnh\\Code\\Kotlin\\Rythmap-server\\src\\main\\kotlin\\com\\mvnh\\media\\banners\\$fileName"
                                 } else {
-                                    filePath = "/home/Rythmap-server-ktor/media/banners/$fileName"
+                                    "/home/Rythmap-server-ktor/media/banners/$fileName"
                                 }
 
                                 val file = File(filePath)

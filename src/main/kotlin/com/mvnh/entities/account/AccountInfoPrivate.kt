@@ -10,6 +10,8 @@ data class AccountInfoPrivate(
     val nickname: String,
     @SerialName("visible_name") val visibleName: AccountVisibleName?,
     val about: String? = null,
+    val avatar: String? = null,
+    val banner: String? = null,
     val email: String,
     @SerialName("music_preferences") val musicPreferences: List<String>? = null,
     @SerialName("other_preferences") val otherPreferences: List<String>? = null,

@@ -149,15 +149,15 @@ paths:
       summary: Get account media
       operationId: getAccountMedia
       parameters:
-        - name: nickname
-          in: query
-          description: Account nickname
-          required: true
-          schema:
-            type: string
         - name: type
           in: path
           description: Media type - can be "avatar" or "banner"
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: query
+          description: Media ID. Can be retrieved from account info
           required: true
           schema:
             type: string
