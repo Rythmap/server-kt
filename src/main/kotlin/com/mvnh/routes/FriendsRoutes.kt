@@ -1,6 +1,6 @@
 package com.mvnh.routes
 
-import com.mvnh.entities.account.AccountLastTracks
+import com.mvnh.entities.account.AccountInfoPublic
 import com.mvnh.entities.account.AccountVisibleName
 import com.mvnh.utils.getMongoDatabase
 import io.ktor.http.*
@@ -8,9 +8,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import org.bson.Document
@@ -29,16 +27,6 @@ data class CancelFriendRequest(val toNickname: String, val fromToken: String)
 
 @Serializable
 data class RemoveFromFriendsRequest(val toNickname: String, val fromToken: String)
-
-@Serializable
-data class SearchFriendsResponse(val nickname: SearchFriendsAccountInfo)
-
-@Serializable
-data class SearchFriendsAccountInfo(
-    @SerialName("account_id") val accountID: String,
-    @SerialName("visible_name") val visibleName: AccountVisibleName,
-    @SerialName("created_at") val createdAt: String
-)
 
 fun Route.friendsRoutes() {
     val mongoDB = getMongoDatabase()
@@ -271,7 +259,7 @@ fun Route.friendsRoutes() {
             if (nickname != null) {
                 val foundDocuments = accountsCollection.find(Document("nickname", Document("\$regex", nickname)))
 
-                val foundNicknamesInfo = mutableMapOf<String, SearchFriendsAccountInfo>()
+                val foundNicknamesInfo = mutableMapOf<String, AccountInfoPublic>()
                 for (document in foundDocuments) {
                     foundNicknamesInfo[document["nickname"] as String] = documentToAccountInfo(document)
                 }
@@ -284,15 +272,21 @@ fun Route.friendsRoutes() {
     }
 }
 
-fun documentToAccountInfo(document: Document): SearchFriendsAccountInfo {
+fun documentToAccountInfo(document: Document): AccountInfoPublic {
     val visibleNameDocument = document["visible_name"] as Document?
 
-    return SearchFriendsAccountInfo(
-        document["account_id"] as String,
-        AccountVisibleName(
-            visibleNameDocument?.get("name") as String?,
-            visibleNameDocument?.get("surname") as String?
-        ),
-        document["created_at"].toString()
+    return AccountInfoPublic(
+        accountID = document["account_id"] as String,
+        nickname = document["nickname"] as String,
+        visibleName = if (visibleNameDocument != null) {
+            AccountVisibleName(
+                name = visibleNameDocument["name"] as String,
+                surname = visibleNameDocument["name"] as String
+            )
+        } else {
+            null
+        },
+        avatar = document["avatar"] as String?,
+        createdAt = document["created_at"].toString()
     )
 }
