@@ -3,7 +3,6 @@ package com.mvnh.utils
 import com.mongodb.client.MongoCollection
 import com.mvnh.entities.account.AccountLogin
 import com.mvnh.entities.account.AccountRegister
-import com.mvnh.entities.account.AccountVisibleName
 import org.bson.Document
 import org.mindrot.jbcrypt.BCrypt
 import java.util.*
