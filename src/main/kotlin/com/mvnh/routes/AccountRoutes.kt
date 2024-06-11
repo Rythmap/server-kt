@@ -104,17 +104,21 @@ fun Route.accountRoutes() {
                                 musicPreferences = document["music_preferences"] as List<String>?,
                                 otherPreferences = document["other_preferences"] as List<String>?,
                                 lastTracks = AccountLastTracks(
-                                    yandexTrack = YandexTrack(
-                                        trackId = yandexLastTrackDocument?.get("track_id") as Int,
-                                        title = yandexLastTrackDocument["title"] as String,
-                                        artist = yandexLastTrackDocument["artist"] as String,
-                                        img = yandexLastTrackDocument["img"] as String,
-                                        duration = yandexLastTrackDocument["duration"] as Int,
-                                        minutes = yandexLastTrackDocument["minutes"] as Int,
-                                        seconds = yandexLastTrackDocument["seconds"] as Int,
-                                        album = yandexLastTrackDocument["album"] as Int,
-                                        downloadLink = yandexLastTrackDocument["download_link"] as String
-                                    )
+                                    yandexTrack = if (yandexLastTrackDocument != null) {
+                                        YandexTrack(
+                                            trackId = yandexLastTrackDocument["track_id"] as Int,
+                                            title = yandexLastTrackDocument["title"] as String,
+                                            artist = yandexLastTrackDocument["artist"] as String,
+                                            img = yandexLastTrackDocument["img"] as String,
+                                            duration = yandexLastTrackDocument["duration"] as Int,
+                                            minutes = yandexLastTrackDocument["minutes"] as Int,
+                                            seconds = yandexLastTrackDocument["seconds"] as Int,
+                                            album = yandexLastTrackDocument["album"] as Int,
+                                            downloadLink = yandexLastTrackDocument["download_link"] as String
+                                        )
+                                    } else {
+                                        null
+                                    }
                                 ),
                                 friends = document["friends"] as List<String>?,
                                 about = document["about"] as String?,
@@ -154,17 +158,21 @@ fun Route.accountRoutes() {
                                 musicPreferences = document["music_preferences"] as List<String>?,
                                 otherPreferences = document["other_preferences"] as List<String>?,
                                 lastTracks = AccountLastTracks(
-                                    yandexTrack = YandexTrack(
-                                        trackId = yandexLastTrackDocument?.get("track_id") as Int,
-                                        title = yandexLastTrackDocument["title"] as String,
-                                        artist = yandexLastTrackDocument["artist"] as String,
-                                        img = yandexLastTrackDocument["img"] as String,
-                                        duration = yandexLastTrackDocument["duration"] as Int,
-                                        minutes = yandexLastTrackDocument["minutes"] as Int,
-                                        seconds = yandexLastTrackDocument["seconds"] as Int,
-                                        album = yandexLastTrackDocument["album"] as Int,
-                                        downloadLink = yandexLastTrackDocument["download_link"] as String
-                                    )
+                                    yandexTrack = if (yandexLastTrackDocument != null) {
+                                        YandexTrack(
+                                            trackId = yandexLastTrackDocument["track_id"] as Int,
+                                            title = yandexLastTrackDocument["title"] as String,
+                                            artist = yandexLastTrackDocument["artist"] as String,
+                                            img = yandexLastTrackDocument["img"] as String,
+                                            duration = yandexLastTrackDocument["duration"] as Int,
+                                            minutes = yandexLastTrackDocument["minutes"] as Int,
+                                            seconds = yandexLastTrackDocument["seconds"] as Int,
+                                            album = yandexLastTrackDocument["album"] as Int,
+                                            downloadLink = yandexLastTrackDocument["download_link"] as String
+                                        )
+                                    } else {
+                                        null
+                                    }
                                 ),
                                 friends = document["friends"] as List<String>?,
                                 about = document["about"] as String?,
