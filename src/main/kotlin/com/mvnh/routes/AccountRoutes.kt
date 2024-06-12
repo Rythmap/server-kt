@@ -121,6 +121,7 @@ fun Route.accountRoutes() {
                                     }
                                 ),
                                 friends = document["friends"] as List<String>?,
+                                friendRequests = document["friend_requests"] as List<String>?,
                                 about = document["about"] as String?,
                                 createdAt = document["created_at"].toString()
                             )

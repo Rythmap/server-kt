@@ -97,7 +97,7 @@ fun Route.mapSocket() {
                 it.status == "online" && calculateDistance(
                     it.location.lat, it.location.lng,
                     receivedUser.location.lat, receivedUser.location.lng
-                ) < 50000
+                ) < 1_234_567
             }.map {
                 User(nickname = it.nickname,
                     location = it.location,

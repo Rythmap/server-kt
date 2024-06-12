@@ -15,5 +15,6 @@ data class AccountInfoPublic(
     @SerialName("other_preferences") val otherPreferences: List<String>? = null,
     @SerialName("last_tracks") val lastTracks: AccountLastTracks? = null,
     @SerialName("friends") val friends: List<String>? = null,
+    @SerialName("friend_requests") val friendRequests: List<String>? = null,
     @SerialName("created_at") val createdAt: String
 )
